@@ -9,11 +9,16 @@ class ProfilePage extends StatelessWidget {
 
   Future<void> _signOut(BuildContext context) async {
     try {
-      // Sign out from Google Sign-In
-      await googleSignIn.signOut();
-      // Then, sign out from Firebase Auth
+      // Check if the user signed in with Google and then sign out
+      final GoogleSignInAccount? googleUser = await googleSignIn.currentUser;
+      if (googleUser != null) {
+        await googleSignIn.signOut();
+      }
+
+      // Sign out from Firebase Auth
       await FirebaseAuth.instance.signOut();
-      // After signing out, navigate to the LandingPage as the root page.
+
+      // After signing out, navigate to the LandingPage as the root page
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => LandingPage()),
       );
