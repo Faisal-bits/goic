@@ -30,26 +30,52 @@ class ProfilePage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text("Profile"),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.logout),
-            onPressed: () =>
-                _signOut(context), // Call the updated sign-out function
-          ),
-        ],
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            SizedBox(height: 40),
-            ElevatedButton(
+      body: Column(
+        mainAxisAlignment:
+            MainAxisAlignment.spaceBetween, // Space out the main axis
+        children: [
+          Column(
+            children: [
+              SizedBox(height: 20), // Provide some spacing from the app bar
+              CircleAvatar(
+                radius: 60, // Size of the profile picture
+                backgroundImage: NetworkImage(
+                    'https://via.placeholder.com/150'), // Example image
+                backgroundColor: Colors.grey.shade200,
+              ),
+              SizedBox(height: 20), // Spacing after the profile picture
+              ElevatedButton(
+                onPressed: () {
+                  // Placeholder for language switch functionality
+                  print("Language switch button pressed");
+                },
+                child: Text('Switch Language'),
+                style: ElevatedButton.styleFrom(
+                  primary: Colors.lightBlue, // Button color
+                  onPrimary: Colors.white, // Text color
+                ),
+              ),
+            ],
+          ),
+          Padding(
+            padding:
+                const EdgeInsets.all(16.0), // Padding around the logout button
+            child: ElevatedButton(
               onPressed: () =>
                   _signOut(context), // Call the updated sign-out function
               child: Text('Logout'),
+              style: ElevatedButton.styleFrom(
+                primary: Colors.red, // Button color
+                onPrimary: Colors.white, // Text color
+                minimumSize: Size(double.infinity, 50), // Button size
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30), // Rounded corners
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
