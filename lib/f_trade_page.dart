@@ -7,60 +7,90 @@ class FTradePage extends StatefulWidget {
 }
 
 class _FTradePageState extends State<FTradePage> {
+  int currentPage = 0;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('F Trade'),
       ),
-      body: Container(
-        height:
-            MediaQuery.of(context).size.height, // Take full height of device
-        child: PageView(
-          scrollDirection: Axis.horizontal,
-          children: [
-            _buildCategoryPage('Imports'),
-            _buildCategoryPage('Exports'),
-            _buildCategoryPage('Re-exports'),
-          ],
-        ),
+      body: PageView(
+        onPageChanged: (index) {
+          setState(() {
+            currentPage = index;
+          });
+        },
+        children: <Widget>[
+          TradeCategoryPage(category: 'Imports', pageIndex: 0),
+          TradeCategoryPage(category: 'Exports', pageIndex: 1),
+          TradeCategoryPage(category: 'Re-exports', pageIndex: 2),
+        ],
       ),
     );
   }
+}
 
-  Widget _buildCategoryPage(String category) {
+class TradeCategoryPage extends StatelessWidget {
+  final String category;
+  final int pageIndex;
+
+  const TradeCategoryPage(
+      {Key? key, required this.category, required this.pageIndex})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(category,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              category,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
           ),
-          _buildPieChart(),
-          _buildLineChart(),
-          _buildBarChart(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: SizedBox(height: 200, child: _buildPieChart()),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: SizedBox(height: 200, child: _buildLineChart()),
+          ),
+          SizedBox(height: 200, child: _buildBarChart()),
         ],
       ),
     );
   }
 
   Widget _buildPieChart() {
-    // Dummy Pie Chart
     return PieChart(
       PieChartData(
-        sections: [
-          PieChartSectionData(value: 10, title: 'Country 1', color: Colors.red),
-          PieChartSectionData(
-              value: 15, title: 'Country 2', color: Colors.blue),
-          // Add more sections as needed
-        ],
+        pieTouchData:
+            PieTouchData(touchCallback: (pieTouchResponse, touchInput) {
+          // Your touch callback code here
+        }),
+        sectionsSpace: 2,
+        centerSpaceRadius: 40,
+        sections: List.generate(6, (i) {
+          return PieChartSectionData(
+            color: Colors.blue[100 * (i + 1)],
+            value: 25,
+            title: 'Country ${i + 1}',
+            radius: 50,
+            titleStyle: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: const Color(0xffffffff)),
+          );
+        }),
       ),
     );
   }
 
   Widget _buildLineChart() {
-    // Corrected Line Chart
     return LineChart(
       LineChartData(
         lineBarsData: [
@@ -68,15 +98,17 @@ class _FTradePageState extends State<FTradePage> {
             spots: [
               FlSpot(0, 1),
               FlSpot(1, 3),
-              // Continue adding FlSpot instances for more data points
+              FlSpot(2, 10),
+              FlSpot(3, 7),
+              FlSpot(4, 12),
+              FlSpot(5, 10),
             ],
             isCurved: true,
-            color: Colors.green, // Corrected usage
-            barWidth: 2, // Example width, adjust as needed
-            dotData: FlDotData(show: false), // Optionally hide or style dots
+            color: Colors.blueAccent,
+            barWidth: 4,
+            dotData: FlDotData(show: false),
           ),
         ],
-        // Continue configuring your LineChartData as needed
       ),
     );
   }
@@ -84,30 +116,18 @@ class _FTradePageState extends State<FTradePage> {
   Widget _buildBarChart() {
     return BarChart(
       BarChartData(
-        barGroups: [
-          BarChartGroupData(
-            x: 0,
+        alignment: BarChartAlignment.spaceAround,
+        barGroups: List.generate(5, (i) {
+          return BarChartGroupData(
+            x: i,
             barRods: [
               BarChartRodData(
-                toY: 8, // This is the required 'toY' parameter.
-                color: Colors.orange, // Use 'color' for a solid color
-                width: 22, // Example width, adjust as needed
-                // If you need a gradient instead of a solid color, use the 'gradient' parameter
-                // gradient: LinearGradient(
-                //   colors: [Colors.orange, Colors.red],
-                //   begin: Alignment.topCenter,
-                //   end: Alignment.bottomCenter,
-                // ),
-                borderRadius:
-                    BorderRadius.circular(0), // Adjust corner radius if needed
+                toY: (i + 1) * 5.0,
+                color: Colors.pinkAccent,
               ),
-              // Add more BarChartRodData instances for additional bars
             ],
-            // Optionally adjust group space, rod width, etc.
-          ),
-          // Add more BarChartGroupData instances for additional groups
-        ],
-        // Continue configuring your BarChartData as needed
+          );
+        }),
       ),
     );
   }

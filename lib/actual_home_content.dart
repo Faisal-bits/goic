@@ -47,67 +47,63 @@ class SectionContainer extends StatelessWidget {
 class ActualHomeContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // Calculate the height for the "Trending" section and other sections based on screen size
-    final trendingSectionHeight =
-        100.0; // Fixed height for the "Trending" section
-    final otherSectionsHeight = MediaQuery.of(context).size.height /
-        10; // Increased height for the other sections
+    // Adjusted heights for sections if needed
+    final otherSectionsHeight = MediaQuery.of(context).size.height / 10;
 
-    return ListView(
-      padding:
-          const EdgeInsets.only(top: 40), // Added more padding from the top
-      children: [
-        SectionContainer(
-          title: "Trending 🔥",
-          onTap: () {}, // No action on tap for the container itself
-          child: SizedBox(
-            height: trendingSectionHeight,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 4, // Example item count for trending items
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.6,
-                    alignment: Alignment.center,
-                    child: Text("Trending Item ${index + 1}"),
-                  ),
-                );
-              },
+    // Wrap your ListView with SafeArea
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.only(top: 40), // Adjust top padding if needed
+        children: [
+          SectionContainer(
+            title: "Trending 🔥",
+            onTap: () {},
+            child: SizedBox(
+              height: 100, // Height for "Trending" section
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: 4, // Example item count for "Trending" items
+                itemBuilder: (context, index) {
+                  return Card(
+                    margin: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                    child: Container(
+                      width: MediaQuery.of(context).size.width * 0.6,
+                      alignment: Alignment.center,
+                      child: Text("Trending Item ${index + 1}"),
+                    ),
+                  );
+                },
+              ),
             ),
           ),
-        ),
-        SectionContainer(
-          title: "GID",
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => GIDPage())),
-          child: SizedBox(
-            height: otherSectionsHeight,
-            child: Center(child: Text("GID Info Here")),
+          SectionContainer(
+            title: "GID",
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => GIDPage())),
+            child: SizedBox(
+                height: otherSectionsHeight,
+                child: Center(child: Text("GID Info Here"))),
           ),
-        ),
-        SectionContainer(
-          title: "F Trade",
-          onTap: () => Navigator.push(
-              context, MaterialPageRoute(builder: (context) => FTradePage())),
-          child: SizedBox(
-            height: otherSectionsHeight,
-            child: Center(child: Text("F Trade Info Here")),
+          SectionContainer(
+            title: "F Trade",
+            onTap: () => Navigator.push(
+                context, MaterialPageRoute(builder: (context) => FTradePage())),
+            child: SizedBox(
+                height: otherSectionsHeight,
+                child: Center(child: Text("F Trade Info Here"))),
           ),
-        ),
-        SectionContainer(
-          title: "Socio Economic",
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => SocioEconomicSearchPage())),
-          child: SizedBox(
-            height: otherSectionsHeight,
-            child: Center(child: Text("Socio Economic Info Here")),
+          SectionContainer(
+            title: "Socio Economic",
+            onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => SocioEconomicSearchPage())),
+            child: SizedBox(
+                height: otherSectionsHeight,
+                child: Center(child: Text("Socio Economic Info Here"))),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
