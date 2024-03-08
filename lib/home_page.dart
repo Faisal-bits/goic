@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 // Make sure these imports point to the correct files
 import 'help_page.dart';
 import 'history_page.dart';
@@ -14,7 +15,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
 
   final List<Widget> _widgetOptions = [
-    ActualHomeContent(), // This should be your actual home content widget
+    ActualHomeContent(),
     HelpPage(),
     HistoryPage(),
     ProfilePage(),
@@ -28,36 +29,25 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    print("Building HomePage");
     return Scaffold(
-      body: Center(
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: _widgetOptions,
-        ),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _widgetOptions,
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: CupertinoTabBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
+              icon: Icon(CupertinoIcons.home), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.help),
-            label: 'Help',
-          ),
+              icon: Icon(CupertinoIcons.question_circle), label: 'Help'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'History',
-          ),
+              icon: Icon(CupertinoIcons.clock), label: 'History'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
+              icon: Icon(CupertinoIcons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Colors.blue,
-        unselectedItemColor: Colors.grey,
+        activeColor: const Color(0xFF000080), // Set active color to navy blue
+        inactiveColor: Colors.grey,
         onTap: _onItemTapped,
       ),
     );

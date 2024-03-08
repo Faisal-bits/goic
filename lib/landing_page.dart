@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:io'; // Import dart:io to use Platform.isIOS
-
 import 'package:google_sign_in/google_sign_in.dart';
 import 'home_page.dart';
 import 'user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LandingPage extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -13,51 +13,43 @@ class LandingPage extends StatelessWidget {
 
   Future<void> _signInWithApple(BuildContext context) async {
     try {
-      final appleCredential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+      final AuthorizationCredentialAppleID appleCredential =
+          await SignInWithApple.getAppleIDCredential(scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ]);
+
+      print("Apple Sign In Debug:");
+      print("Given Name: ${appleCredential.givenName}");
+      print("Family Name: ${appleCredential.familyName}");
+      print("Email: ${appleCredential.email}");
 
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
         accessToken: appleCredential.authorizationCode,
       );
 
-      final authResult =
-          await FirebaseAuth.instance.signInWithCredential(oauthCredential);
+      final authResult = await _auth.signInWithCredential(oauthCredential);
       final User? user = authResult.user;
 
       if (user != null) {
-        // Get the first name and last name from Apple credential
         String firstName = appleCredential.givenName ?? "";
         String lastName = appleCredential.familyName ?? "";
+        String email = appleCredential.email ?? "";
 
-        // Fallback to split the display name if fullName not provided
-        if (firstName.isEmpty && lastName.isEmpty) {
-          List<String> names = user.displayName?.split(' ') ?? ["", ""];
-          firstName = names.first;
-          lastName = names.length > 1 ? names.sublist(1).join(' ') : '';
+        if (email.isNotEmpty) {
+          // Only save user info if email was provided
+          await UserService()
+              .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
         }
 
-        String email = user.email ?? "";
-
-        // Save user info to Firestore
-        await UserService()
-            .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
-
-        // Navigate to HomePage or handle the sign-in accordingly
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomePage()),
-        );
+            MaterialPageRoute(builder: (context) => HomePage()));
       }
     } catch (error) {
       print(error);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Failed to sign in with Apple. Please try again.")),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Failed to sign in with Apple. Please try again.")));
     }
   }
 
@@ -72,35 +64,37 @@ class LandingPage extends StatelessWidget {
           accessToken: googleSignInAuthentication.accessToken,
           idToken: googleSignInAuthentication.idToken,
         );
+
         final UserCredential authResult =
             await _auth.signInWithCredential(credential);
         final User? user = authResult.user;
 
         if (user != null) {
-          // Assuming displayName contains 'First Last'
-          List<String> names = user.displayName?.split(' ') ?? ["", ""];
-          String firstName = names.first;
-          String lastName = names.length > 1
-              ? names.sublist(1).join(' ')
-              : ''; // Handles middle name too
-          String email = user.email ?? "";
+          // Check Firestore for existing user data
+          final userData = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
 
-          // Save user info to Firestore
-          await UserService()
-              .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
+          if (!userData.exists) {
+            List<String> names = user.displayName?.split(' ') ?? ["", ""];
+            String firstName = names.first;
+            String lastName =
+                names.length > 1 ? names.sublist(1).join(' ') : '';
+            String email = user.email ?? "";
 
-          // Navigate to the home page if the sign-in is successful
+            await UserService()
+                .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
+          }
+
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => HomePage()),
-          );
+              MaterialPageRoute(builder: (context) => HomePage()));
         }
       }
     } catch (error) {
-      print(error); // Handle the error appropriately in your app
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text("Failed to sign in with Google. Please try again.")),
-      );
+      print(error);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Failed to sign in with Google. Please try again.")));
     }
   }
 

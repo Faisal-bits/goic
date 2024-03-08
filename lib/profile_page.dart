@@ -9,23 +9,22 @@ class ProfilePage extends StatelessWidget {
 
   Future<void> _signOut(BuildContext context) async {
     try {
-      // Check if the user signed in with Google and then sign out
-      final GoogleSignInAccount? googleUser = await googleSignIn.currentUser;
-      if (googleUser != null) {
-        await googleSignIn.signOut();
-      }
+      // Attempt to sign out from Google first
+      await googleSignIn.signOut();
+      print('Google user signed out.');
 
-      // Sign out from Firebase Auth
+      // Then, sign out from Firebase Auth
       await FirebaseAuth.instance.signOut();
+      print('Firebase user signed out.');
 
-      // After signing out, navigate to the LandingPage as the root page
+      // After successfully signing out, navigate to the LandingPage
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => LandingPage()),
       );
     } catch (error) {
       print("Error signing out: $error");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error signing out")),
+        SnackBar(content: Text("Error signing out: $error")),
       );
     }
   }
@@ -52,8 +51,8 @@ class ProfilePage extends StatelessWidget {
               SizedBox(height: 20), // Spacing after the profile picture
               ElevatedButton(
                 onPressed: () {
-                  // Placeholder for language switch functionality
-                  print("Language switch button pressed");
+                  print(
+                      "Language switch button pressed"); // Placeholder for language switch functionality
                 },
                 child: Text('Switch Language'),
                 style: ElevatedButton.styleFrom(
