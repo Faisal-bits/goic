@@ -46,7 +46,7 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(CupertinoIcons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
-        activeColor: const Color(0xFF000080), // Set active color to navy blue
+        activeColor: Colors.blue.shade600, // Set active color to navy blue
         inactiveColor: Colors.grey,
         onTap: _onItemTapped,
       ),

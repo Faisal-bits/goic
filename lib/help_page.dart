@@ -135,6 +135,9 @@ class _HelpPageState extends State<HelpPage> {
               controller: _textEditingController,
               decoration: InputDecoration(
                 hintText: "Type your message here...",
+                contentPadding: const EdgeInsets.symmetric(
+                    vertical: 10.0,
+                    horizontal: 12.0), // Adjust the padding here
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -142,18 +145,22 @@ class _HelpPageState extends State<HelpPage> {
             ),
           ),
           _isLoading
-              ? SizedBox(
-                  height: 20.0, // Set your desired height
-                  width: 20.0, // Set your desired width
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0, // Adjust the loading stroke width
+              ? const Padding(
+                  padding: EdgeInsets.only(
+                      left: 10), // Add padding when the loading icon is visible
+                  child: SizedBox(
+                    height: 20.0, // Adjust as needed
+                    width: 20.0, // Adjust as needed
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.0,
+                    ),
                   ),
                 )
               : IconButton(
                   icon: Icon(Icons.send),
                   onPressed: _sendMessage,
                 ),
-          if (showChatbot) // Clear Chat button only in chatbot interface
+          if (showChatbot) // This ensures the button is shown only in the chatbot interface
             IconButton(
               icon: Icon(Icons.delete_outline),
               onPressed: _clearChat,

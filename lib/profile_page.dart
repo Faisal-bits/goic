@@ -54,7 +54,7 @@ class ProfilePage extends StatelessWidget {
                   print(
                       "Language switch button pressed"); // Placeholder for language switch functionality
                 },
-                child: Text('Switch Language'),
+                child: Text('Language / اللغة'),
                 style: ElevatedButton.styleFrom(
                   primary: Colors.lightBlue, // Button color
                   onPrimary: Colors.white, // Text color
