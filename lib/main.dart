@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // Ensure you've imported firebase_core
+import 'package:firebase_core/firebase_core.dart';
 import 'landing_page.dart';
 import 'home_page.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-// Import only the pages you're going to use immediately after sign-in
 
 Future<void> main() async {
   WidgetsFlutterBinding
-      .ensureInitialized(); // Ensure plugin services are initialized
+      .ensureInitialized(); // Ensuring plugin services are initialized
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   ); // Initialize Firebase
@@ -24,7 +23,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false,
-      // Instead of directly setting the home property, use a builder to decide
+      // Instead of directly setting the home property, using a builder to decide
       // which initial route to use based on the authentication state.
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
@@ -47,7 +46,7 @@ class MyApp extends StatelessWidget {
       ),
       routes: {
         '/home': (context) => HomePage(),
-        // Define other routes as needed
+        // other routes as needed
       },
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'openai_service.dart'; // Adjust the import path as needed
 
 class HelpPage extends StatefulWidget {
   @override
@@ -6,7 +7,11 @@ class HelpPage extends StatefulWidget {
 }
 
 class _HelpPageState extends State<HelpPage> {
-  bool showChatbot = false; // false for Info, true for Bot
+  bool showChatbot = false;
+  final TextEditingController _textEditingController = TextEditingController();
+  final List<Map<String, dynamic>> messages = [];
+  final OpenAIService _openAIService = OpenAIService();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -14,56 +19,52 @@ class _HelpPageState extends State<HelpPage> {
       appBar: AppBar(
         title: Text('Help'),
         actions: [
-          // Custom toggle switch between Info and Bot
           _customToggle(),
         ],
       ),
-      body: showChatbot
-          ? _chatbotInterface() // The enhanced chatbot interface
-          : _infoPage(), // The improved information page with drop-downs
+      body: showChatbot ? _chatbotInterface() : _infoPage(),
     );
   }
 
   Widget _customToggle() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          showChatbot = !showChatbot;
-        });
-      },
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white, // Background of the toggle
+        borderRadius: BorderRadius.circular(20.0), // Rounded corners
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text(
-              'Info',
-              style: TextStyle(
-                color: showChatbot ? Colors.grey : Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          Switch(
-            value: showChatbot,
-            onChanged: (value) {
-              setState(() {
-                showChatbot = value;
-              });
-            },
-            activeColor: Theme.of(context).colorScheme.secondary,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Text(
-              'Bot',
-              style: TextStyle(
-                color: showChatbot ? Colors.white : Colors.grey,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+          _toggleOption('Info', !showChatbot),
+          _toggleOption('ChatBot', showChatbot),
         ],
+      ),
+    );
+  }
+
+  Widget _toggleOption(String title, bool isSelected) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          showChatbot = (title == 'ChatBot');
+        });
+      },
+      child: AnimatedContainer(
+        duration: Duration(milliseconds: 300),
+        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color:
+              isSelected ? Colors.blue : Colors.transparent, // Highlight color
+          borderRadius: BorderRadius.circular(20.0),
+        ),
+        child: Text(
+          title,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black, // Text color
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -95,12 +96,14 @@ class _HelpPageState extends State<HelpPage> {
     return Column(
       children: [
         Expanded(
-          child: ListView(
-            // This should be dynamically populated with your chat content
-            children: [
-              _buildChatMessage("Hi! How can I help you today?", isBot: true),
-              // Add more dynamic chat messages here
-            ],
+          child: ListView.builder(
+            itemCount: messages.length,
+            itemBuilder: (context, index) {
+              return _buildChatMessage(
+                messages[index]['message'],
+                isBot: messages[index]['isBot'],
+              );
+            },
           ),
         ),
         _buildTextInputField(),
@@ -110,12 +113,15 @@ class _HelpPageState extends State<HelpPage> {
 
   Widget _buildChatMessage(String message, {bool isBot = false}) {
     return ListTile(
+      leading: isBot ? Icon(Icons.android) : null,
       title: Text(
         message,
         style: TextStyle(
           color: isBot ? Colors.blue : Colors.black,
+          fontWeight: FontWeight.bold,
         ),
       ),
+      subtitle: Text(isBot ? 'ChatBot' : 'You'),
     );
   }
 
@@ -126,6 +132,7 @@ class _HelpPageState extends State<HelpPage> {
         children: [
           Expanded(
             child: TextField(
+              controller: _textEditingController,
               decoration: InputDecoration(
                 hintText: "Type your message here...",
                 border: OutlineInputBorder(
@@ -134,14 +141,58 @@ class _HelpPageState extends State<HelpPage> {
               ),
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.send),
-            onPressed: () {
-              // Implement sending message functionality here
-            },
-          ),
+          _isLoading
+              ? SizedBox(
+                  height: 20.0, // Set your desired height
+                  width: 20.0, // Set your desired width
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2.0, // Adjust the loading stroke width
+                  ),
+                )
+              : IconButton(
+                  icon: Icon(Icons.send),
+                  onPressed: _sendMessage,
+                ),
+          if (showChatbot) // Clear Chat button only in chatbot interface
+            IconButton(
+              icon: Icon(Icons.delete_outline),
+              onPressed: _clearChat,
+            ),
         ],
       ),
     );
+  }
+
+  void _clearChat() {
+    setState(() {
+      messages.clear(); // Clears messages from the UI
+      _openAIService
+          .clearChat(); // Optionally clear chat on the server or reset session
+    });
+  }
+
+  void _sendMessage() async {
+    final message = _textEditingController.text.trim();
+    if (message.isNotEmpty) {
+      setState(() {
+        messages.add({"message": message, "isBot": false});
+        _isLoading = true; // Start loading
+      });
+      _textEditingController.clear();
+
+      try {
+        final response = await _openAIService.sendMessage(message);
+        setState(() {
+          messages.add({"message": response, "isBot": true});
+        });
+      } catch (e) {
+        // Handle error or show an error message if necessary
+        print("Failed to send message: $e");
+      } finally {
+        setState(() {
+          _isLoading = false; // Stop loading
+        });
+      }
+    }
   }
 }
