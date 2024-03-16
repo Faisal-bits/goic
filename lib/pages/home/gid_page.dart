@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'dart:math';
-import 'models/search_config.dart';
-import 'models/shared_history.dart';
+import '../../models/search_config.dart';
+import '../../models/shared_history.dart';
 import 'package:intl/intl.dart';
-import 'models/history_notifier.dart';
+import '../../models/history_notifier.dart';
 
 class CountryData {
   final String name;

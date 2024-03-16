@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'landing_page.dart';
-import 'home_page.dart';
+import 'pages/landing_page.dart';
+import 'navbar.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.active) {
             // User is logged in
             if (snapshot.hasData) {
-              return HomePage();
+              return NavBar();
             }
             // User is not logged in
             return LandingPage();
@@ -45,7 +45,7 @@ class MyApp extends StatelessWidget {
         },
       ),
       routes: {
-        '/home': (context) => HomePage(),
+        '/home': (context) => NavBar(),
         // other routes as needed
       },
     );

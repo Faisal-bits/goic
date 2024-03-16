@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'openai_service.dart'; // Adjust the import path as needed
+import '../services/openai_service.dart'; // Adjust the import path as needed
 
 class HelpPage extends StatefulWidget {
   @override

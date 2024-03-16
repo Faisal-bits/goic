@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 // Make sure these imports point to the correct files
-import 'help_page.dart';
-import 'history_page.dart';
-import 'profile_page.dart';
-import 'actual_home_content.dart'; // This should be the widget you want to show as the home content
+import 'pages/help_page.dart';
+import 'pages/history_page.dart';
+import 'pages/profile_page.dart';
+import 'pages/home/actual_home_content.dart'; // This should be the widget you want to show as the home content
 
-class HomePage extends StatefulWidget {
+class NavBar extends StatefulWidget {
   @override
-  _HomePageState createState() => _HomePageState();
+  _NavBarState createState() => _NavBarState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _NavBarState extends State<NavBar> {
   int _selectedIndex = 0;
   Key _historyPageKey = UniqueKey(); // Add this line
 

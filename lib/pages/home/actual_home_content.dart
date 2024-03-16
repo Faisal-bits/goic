@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'gid_page.dart'; // Ensure this is the correct import path
 import 'f_trade_page.dart'; // Ensure this is the correct import path
-import 'socio_economic_search_page.dart'; // Ensure this is the correct import path
+import 'socio_economic/socio_economic_search_page.dart'; // Ensure this is the correct import path
 
 class SectionContainer extends StatelessWidget {
   final String title;

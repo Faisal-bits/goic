@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:io'; // Import dart:io to use Platform.isIOS
 import 'package:google_sign_in/google_sign_in.dart';
-import 'home_page.dart';
-import 'user_service.dart';
+import '../navbar.dart';
+import '../services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LandingPage extends StatelessWidget {
@@ -43,8 +43,8 @@ class LandingPage extends StatelessWidget {
               .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
         }
 
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => HomePage()));
+        Navigator.of(context)
+            .pushReplacement(MaterialPageRoute(builder: (context) => NavBar()));
       }
     } catch (error) {
       print(error);
@@ -88,7 +88,7 @@ class LandingPage extends StatelessWidget {
           }
 
           Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => HomePage()));
+              MaterialPageRoute(builder: (context) => NavBar()));
         }
       }
     } catch (error) {

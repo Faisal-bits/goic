@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart'; // Ensure you've added intl to your pubspec.yaml
-import 'gid_page.dart';
-import 'models/search_config.dart';
-import 'models/shared_history.dart';
-import 'models/history_notifier.dart';
+import 'home/gid_page.dart';
+import '../models/search_config.dart';
+import '../models/shared_history.dart';
+import '../models/history_notifier.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
