@@ -13,13 +13,31 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  Key _historyPageKey = UniqueKey(); // Add this line
 
-  final List<Widget> _widgetOptions = [
-    ActualHomeContent(),
-    HelpPage(),
-    HistoryPage(),
-    ProfilePage(),
-  ];
+  void refreshHistory() {
+    setState(() {
+      _historyPageKey =
+          UniqueKey(); // This generates a new key, forcing the widget to rebuild
+    });
+  }
+
+  // Updated to use a method to get the widget based on the selected index
+  Widget _getWidgetOption(int index) {
+    switch (index) {
+      case 0:
+        return ActualHomeContent();
+      case 1:
+        return HelpPage();
+      case 2:
+        return HistoryPage(
+            key: _historyPageKey); // Now dynamically returning a new instance
+      case 3:
+        return ProfilePage();
+      default:
+        return ActualHomeContent();
+    }
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -32,7 +50,8 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        children: _widgetOptions,
+        // Use a method to generate the current widget based on the selected index
+        children: List<Widget>.generate(4, (index) => _getWidgetOption(index)),
       ),
       bottomNavigationBar: CupertinoTabBar(
         items: const <BottomNavigationBarItem>[
@@ -46,7 +65,7 @@ class _HomePageState extends State<HomePage> {
               icon: Icon(CupertinoIcons.person), label: 'Profile'),
         ],
         currentIndex: _selectedIndex,
-        activeColor: Colors.blue.shade600, // Set active color to navy blue
+        activeColor: Colors.blue.shade600,
         inactiveColor: Colors.grey,
         onTap: _onItemTapped,
       ),
