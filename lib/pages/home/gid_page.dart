@@ -5,6 +5,9 @@ import '../../models/search_config.dart';
 import '../../models/shared_history.dart';
 import 'package:intl/intl.dart';
 import '../../models/history_notifier.dart';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('GIDPage');
 
 class CountryData {
   final String name;
@@ -44,7 +47,7 @@ class GIDPage extends StatefulWidget {
       : super(key: key);
 
   @override
-  _GIDPageState createState() => _GIDPageState();
+  State<GIDPage> createState() => _GIDPageState();
 }
 
 class _GIDPageState extends State<GIDPage> {
@@ -56,19 +59,16 @@ class _GIDPageState extends State<GIDPage> {
   @override
   void initState() {
     super.initState();
-    // Initialize your page with either the provided config or default values
     selectedYear = widget.initialConfig?.year ?? DateTime.now().year;
-    selectedISICSector =
-        widget.initialConfig?.isic ?? '10'; // Adjust default as necessary
-    selectedStatus =
-        widget.initialConfig?.status ?? 'All'; // Adjust default as necessary
-    filterData(); // You might want to adjust this method accordingly
+    selectedISICSector = widget.initialConfig?.isic ?? '10'; // default
+    selectedStatus = widget.initialConfig?.status ?? 'All'; // default
+    filterData();
   }
 
   List<DropdownMenuItem<String>> getISICSectorItems() {
     List<Map<String, String>> isicSectors = [
       {'code': '10', 'description': 'Manufacture of food products'},
-      // Add other sectors here...
+      // other sectors here...
       {
         'code': '33',
         'description': 'Repair and installation of machinery and equipment'
@@ -101,7 +101,6 @@ class _GIDPageState extends State<GIDPage> {
   }
 
   void filterData() {
-    // Adjusted logic for consistency
     final baseData = {
       'Saudi Arabia': [1200, 500, 300000],
       'UAE': [900, 450, 250000],
@@ -111,11 +110,11 @@ class _GIDPageState extends State<GIDPage> {
       'Bahrain': [300, 100, 80000],
     };
 
-    // Simulate fetching data based on filters. This example only considers the year.
+    // Simulate fetching data based on filters. This right now only considers the year.
     countryDataList = List.generate(6, (index) {
       String country = baseData.keys.elementAt(index);
       List<int> values = baseData[country]!;
-      // Adjust the multiplier or formula as needed for realistic simulation
+      // multiplier or formula for simulation
       double yearMultiplier = (selectedYear - 2020).toDouble();
       return CountryData(
         name: country,
@@ -131,30 +130,30 @@ class _GIDPageState extends State<GIDPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("GID Summary"),
+        title: const Text("GID Summary"),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
               child: Text(
                 "Search Filters",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             _buildFilters(),
-            SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            const SizedBox(height: 20),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
                 "GCC - Summary Stats",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             _buildGCCSummaryCard(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildHorizontalBarCharts(),
           ],
         ),
@@ -164,35 +163,35 @@ class _GIDPageState extends State<GIDPage> {
 
   Widget _buildFilters() {
     return Card(
-      // color: Colors.grey[100], // Set the card's background color to light gray
-      margin: EdgeInsets.all(16),
+      // color: Colors.grey[100], // the card's background color to light gray
+      margin: const EdgeInsets.all(16),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(child: _buildYearDropdown()),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(child: _buildISICDropdown()),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Expanded(child: _buildStatusDropdown()),
               ],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: () {
-                filterData(); // Apply filters and update UI
+                filterData();
                 _onSearchPressed();
-                print(
+                logger.info(
                     'Filters applied: Year: $selectedYear, ISIC: $selectedISICSector, Status: $selectedStatus');
               },
               style: ElevatedButton.styleFrom(
-                primary: Colors.blue, // Set the button color
-                onPrimary: Colors.white, // Set the text color
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
               ),
-              child: Text('Search'),
+              child: const Text('Search'),
             ),
           ],
         ),
@@ -205,7 +204,7 @@ class _GIDPageState extends State<GIDPage> {
     return DropdownButtonFormField<int>(
       isExpanded: true,
       value: selectedYear,
-      decoration: InputDecoration(labelText: 'Year'),
+      decoration: const InputDecoration(labelText: 'Year'),
       onChanged: (value) {
         setState(() {
           selectedYear = value!;
@@ -223,7 +222,7 @@ class _GIDPageState extends State<GIDPage> {
   Widget _buildISICDropdown() {
     List<Map<String, dynamic>> isicSectors = [
       {'code': '10', 'description': 'Manufacture of food products'},
-      // Add other sectors according to your needs
+      // other sectors here ...
       {
         'code': '33',
         'description': 'Repair and installation of machinery and equipment'
@@ -233,7 +232,7 @@ class _GIDPageState extends State<GIDPage> {
     return DropdownButtonFormField<String>(
       isExpanded: true,
       value: selectedISICSector,
-      decoration: InputDecoration(labelText: 'ISIC Sector'),
+      decoration: const InputDecoration(labelText: 'ISIC Sector'),
       onChanged: (value) {
         setState(() {
           selectedISICSector = value!;
@@ -253,7 +252,7 @@ class _GIDPageState extends State<GIDPage> {
     return DropdownButtonFormField<String>(
       isExpanded: true,
       value: selectedStatus,
-      decoration: InputDecoration(labelText: 'Status'),
+      decoration: const InputDecoration(labelText: 'Status'),
       onChanged: (value) {
         setState(() {
           selectedStatus = value!;
@@ -276,15 +275,17 @@ class _GIDPageState extends State<GIDPage> {
     return Card(
       elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(8),
+        padding: const EdgeInsets.all(8),
         child: Column(
           children: [
             Text(title,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             Text(formattedValue,
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
             Text(percentage,
                 style:
                     TextStyle(color: isPositive ? Colors.green : Colors.red)),
@@ -319,9 +320,9 @@ class _GIDPageState extends State<GIDPage> {
 
     // No need to convert to Int and then to String, directly pass double to _buildStatCard
     return Card(
-      margin: EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
@@ -342,20 +343,19 @@ class _GIDPageState extends State<GIDPage> {
 
   Widget _buildHorizontalBarCharts() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Add this line
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          // Wrap the Text widget with Padding for better spacing
-          padding: const EdgeInsets.symmetric(
-              horizontal: 20), // Adjust padding as needed
+        const Padding(
+          // Wrapping the Text widget with Padding for better spacing
+          padding: EdgeInsets.symmetric(horizontal: 20),
           child: Text(
             "GCC - Bar Graphs",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.left, // Align text to the left
+            textAlign: TextAlign.left,
           ),
         ),
-        SizedBox(height: 20),
-        Container(
+        const SizedBox(height: 20),
+        SizedBox(
           height: 300,
           child: PageView(
             children: [
@@ -402,20 +402,20 @@ class _GIDPageState extends State<GIDPage> {
   }) {
     final maxY = countryDataList.map(dataSelector).reduce(max) * 1.15;
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         children: [
           Text(title,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(height: 10),
+              style:
+                  const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 10),
           Expanded(
             child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
                 maxY: maxY,
                 minY: 0,
-                // Update this property to remove grid lines
-                gridData: FlGridData(show: false),
+                gridData: const FlGridData(show: false),
                 barGroups: countryDataList.asMap().entries.map((entry) {
                   final index = entry.key;
                   final country = entry.value;
@@ -434,15 +434,15 @@ class _GIDPageState extends State<GIDPage> {
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
                     tooltipBgColor: Colors.blueGrey,
-                    tooltipPadding: EdgeInsets.all(4), // Adjust tooltip padding
+                    tooltipPadding: const EdgeInsets.all(4), // tooltip padding
                     tooltipMargin: 8, // Adjust tooltip margin
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
                       return BarTooltipItem(
                         formatAxisValue(rod.toY) +
-                            (rod.toY >= 1000 ? '' : ''), // Format tooltip text
-                        TextStyle(
+                            (rod.toY >= 1000 ? '' : ''), // tooltip text
+                        const TextStyle(
                             color: Colors.white,
-                            fontSize: 12), // Adjust tooltip font size
+                            fontSize: 12), // tooltip font size
                       );
                     },
                   ),
@@ -453,8 +453,8 @@ class _GIDPageState extends State<GIDPage> {
                       showTitles: true,
                       getTitlesWidget: (double value, _) {
                         return Text(countryDataList[value.toInt()].name,
-                            style:
-                                TextStyle(color: Colors.black, fontSize: 10));
+                            style: const TextStyle(
+                                color: Colors.black, fontSize: 10));
                       },
                     ),
                   ),
@@ -463,17 +463,17 @@ class _GIDPageState extends State<GIDPage> {
                       showTitles: true,
                       getTitlesWidget: (double value, _) => Text(
                           formatAxisValue(value),
-                          style: TextStyle(
+                          style: const TextStyle(
                               color: Color(0xff7589a2),
                               fontWeight: FontWeight.bold,
                               fontSize: 14)),
-                      reservedSize: 40, // Adjust for y-axis label spacing
+                      reservedSize: 40, // y-axis label spacing
                     ),
                   ),
-                  topTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles:
-                      AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
               ),
             ),

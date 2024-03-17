@@ -5,10 +5,15 @@ import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_service.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('NewPost');
 
 class NewPostScreen extends StatefulWidget {
+  const NewPostScreen({super.key});
+
   @override
-  _NewPostScreenState createState() => _NewPostScreenState();
+  State<NewPostScreen> createState() => _NewPostScreenState();
 }
 
 class _NewPostScreenState extends State<NewPostScreen> {
@@ -25,11 +30,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
       try {
         position = await Geolocator.getCurrentPosition(
                 desiredAccuracy: LocationAccuracy.high)
-            .timeout(Duration(seconds: 5),
+            .timeout(const Duration(seconds: 5),
                 onTimeout: () =>
                     throw TimeoutException('Location request timed out'));
       } catch (e) {
-        print(
+        logger.warning(
             e); // Handle the timeout exception or any other exceptions accordingly
       }
 
@@ -62,10 +67,10 @@ class _NewPostScreenState extends State<NewPostScreen> {
           await FirebaseFirestore.instance.collection('posts').add(post);
           Navigator.of(context).pop(); // Navigate back after submitting
         } catch (e) {
-          print("Failed to add post: $e");
+          logger.warning("Failed to add post: $e");
         }
       } else {
-        print("User ID not found, cannot submit post.");
+        logger.warning("User ID not found, cannot submit post.");
       }
 
       setState(() => _isSubmitting = false);
@@ -87,14 +92,14 @@ class _NewPostScreenState extends State<NewPostScreen> {
       // This call is wrapped in a Future that will timeout after 5 seconds.
       List<Placemark> placemarks =
           await placemarkFromCoordinates(position.latitude, position.longitude)
-              .timeout(Duration(seconds: 5));
+              .timeout(const Duration(seconds: 5));
       Placemark place = placemarks[0];
       return place.country; // Return the country name
     } on TimeoutException catch (_) {
-      print("Reverse geocoding request timed out.");
+      logger.warning("Reverse geocoding request timed out.");
       return "Unknown"; // Return a fallback value if there is a timeout
     } catch (e) {
-      print("Failed to get country name: $e");
+      logger.warning("Failed to get country name: $e");
       return "Unknown"; // Return a fallback value if any error occurs
     }
   }
@@ -102,24 +107,25 @@ class _NewPostScreenState extends State<NewPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Create Post')),
+      appBar: AppBar(title: const Text('Create Post')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _controller,
-              decoration: InputDecoration(labelText: "What's on your mind?"),
+              decoration:
+                  const InputDecoration(labelText: "What's on your mind?"),
               maxLines: null,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _isSubmitting ? null : () async => await _submitPost(),
-              child: Text('Submit Post'),
               style: ElevatedButton.styleFrom(
-                onPrimary: Colors.white, // Text color
-                primary: Colors.blue, // Button background color
+                foregroundColor: Colors.white, // Text color
+                backgroundColor: Colors.blue, // Button background color
               ),
+              child: const Text('Submit Post'),
             ),
           ],
         ),

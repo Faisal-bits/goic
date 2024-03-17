@@ -2,8 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'landing_page.dart';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('ProfilePage');
 
 class ProfilePage extends StatelessWidget {
+  ProfilePage({super.key});
+
   // Initialize GoogleSignIn
   final GoogleSignIn googleSignIn = GoogleSignIn();
 
@@ -11,18 +16,18 @@ class ProfilePage extends StatelessWidget {
     try {
       // Attempt to sign out from Google first
       await googleSignIn.signOut();
-      print('Google user signed out.');
+      logger.info('Google user signed out.');
 
       // Then, sign out from Firebase Auth
       await FirebaseAuth.instance.signOut();
-      print('Firebase user signed out.');
+      logger.info('Firebase user signed out.');
 
       // After successfully signing out, navigate to the LandingPage
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => LandingPage()),
       );
     } catch (error) {
-      print("Error signing out: $error");
+      logger.warning("Error signing out: $error");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error signing out: $error")),
       );
@@ -33,7 +38,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Profile"),
+        title: const Text("Profile"),
       ),
       body: Column(
         mainAxisAlignment:
@@ -41,24 +46,25 @@ class ProfilePage extends StatelessWidget {
         children: [
           Column(
             children: [
-              SizedBox(height: 20), // Provide some spacing from the app bar
+              const SizedBox(
+                  height: 20), // Provide some spacing from the app bar
               CircleAvatar(
                 radius: 60, // Size of the profile picture
-                backgroundImage: NetworkImage(
+                backgroundImage: const NetworkImage(
                     'https://via.placeholder.com/150'), // Example image
                 backgroundColor: Colors.grey.shade200,
               ),
-              SizedBox(height: 20), // Spacing after the profile picture
+              const SizedBox(height: 20), // Spacing after the profile picture
               ElevatedButton(
                 onPressed: () {
-                  print(
+                  logger.info(
                       "Language switch button pressed"); // Placeholder for language switch functionality
                 },
-                child: Text('Language / اللغة'),
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.lightBlue, // Button color
-                  onPrimary: Colors.white, // Text color
+                  backgroundColor: Colors.lightBlue, // Button color
+                  foregroundColor: Colors.white, // Text color
                 ),
+                child: const Text('Language / اللغة'),
               ),
             ],
           ),
@@ -68,15 +74,16 @@ class ProfilePage extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () =>
                   _signOut(context), // Call the updated sign-out function
-              child: Text('Logout'),
+
               style: ElevatedButton.styleFrom(
-                primary: Colors.red, // Button color
-                onPrimary: Colors.white, // Text color
-                minimumSize: Size(double.infinity, 50), // Button size
+                backgroundColor: Colors.red, // Button color
+                foregroundColor: Colors.white, // Text color
+                minimumSize: const Size(double.infinity, 50), // Button size
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30), // Rounded corners
                 ),
               ),
+              child: const Text('Logout'),
             ),
           ),
         ],

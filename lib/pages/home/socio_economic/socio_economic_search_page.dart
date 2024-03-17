@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'socio_economic_result_page.dart'; // Ensure this file exists
+import 'socio_economic_result_page.dart';
 
 class SocioEconomicSearchPage extends StatefulWidget {
+  const SocioEconomicSearchPage({super.key});
+
   @override
-  _SocioEconomicSearchPageState createState() =>
+  State<SocioEconomicSearchPage> createState() =>
       _SocioEconomicSearchPageState();
 }
 
@@ -27,14 +29,14 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Socio-Economic Search'),
+        title: const Text('Socio-Economic Search'),
       ),
       body: Center(
         child: SingleChildScrollView(
           child: Card(
             elevation: 1,
             color: Colors.grey[100], // Very light gray
-            margin: EdgeInsets.all(16),
+            margin: const EdgeInsets.all(16),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -51,9 +53,9 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                             });
                           },
                           child: Container(
-                            margin: EdgeInsets.symmetric(
+                            margin: const EdgeInsets.symmetric(
                                 horizontal: 8), // Add spacing between flags
-                            padding: EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
@@ -72,10 +74,10 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                       }).toList(),
                     ),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
                     decoration:
-                        InputDecoration(labelText: 'Economic Indicator'),
+                        const InputDecoration(labelText: 'Economic Indicator'),
                     value: selectedEconomicIndicator,
                     onChanged: (newValue) {
                       setState(() {
@@ -90,10 +92,10 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   DropdownButtonFormField<String>(
-                    decoration:
-                        InputDecoration(labelText: 'Industrial Indicator'),
+                    decoration: const InputDecoration(
+                        labelText: 'Industrial Indicator'),
                     value: selectedIndustrialIndicator,
                     onChanged: (newValue) {
                       setState(() {
@@ -108,7 +110,7 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                       );
                     }).toList(),
                   ),
-                  SizedBox(height: 20),
+                  const SizedBox(height: 20),
                   ElevatedButton(
                     onPressed: () {
                       // Navigate to result page with selected options
@@ -123,19 +125,18 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                         ),
                       );
                     },
-                    child: Text(
-                      'Search',
-                      style: TextStyle(color: Colors.white), // Text color
-                    ),
                     style: ElevatedButton.styleFrom(
-                      primary: Colors.blue, // Background color
-                      onPrimary:
-                          Colors.white, // This will affect the text color
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      backgroundColor: Colors.blue, // Background color
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 15),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
+                    ),
+                    child: const Text(
+                      'Search',
+                      style: TextStyle(color: Colors.white), // Text color
                     ),
                   ),
                 ],

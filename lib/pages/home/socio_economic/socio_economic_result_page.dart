@@ -14,7 +14,7 @@ class SocioEconomicResultPage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _SocioEconomicResultPageState createState() =>
+  State<SocioEconomicResultPage> createState() =>
       _SocioEconomicResultPageState();
 }
 
@@ -91,12 +91,13 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
   Widget _buildIndicatorDropdown(String title, List<String> options,
       String selectedValue, ValueChanged<String?> onChanged) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title,
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              style:
+                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
           DropdownButton<String>(
             value: selectedValue,
             onChanged: (newValue) {
@@ -121,7 +122,7 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
   Widget _buildBarChart(List<double> data) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Container(
+      child: SizedBox(
         height: 300,
         child: BarChart(
           BarChartData(
@@ -136,7 +137,7 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
                   getTitlesWidget: (double value, TitleMeta meta) {
                     final year = DateTime.now().year - 4 + value.toInt();
                     return Text(year.toString(),
-                        style: TextStyle(
+                        style: const TextStyle(
                             color: Colors.black, fontWeight: FontWeight.bold));
                   },
                   reservedSize: 32,
@@ -148,19 +149,20 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
                   getTitlesWidget: (value, meta) {
                     // This function determines the widget to display for each Y-axis title
                     return Text('${value.toInt()}',
-                        style: TextStyle(color: Colors.black, fontSize: 10));
+                        style:
+                            const TextStyle(color: Colors.black, fontSize: 10));
                   },
-                  reservedSize:
-                      40, // Adjust this value as needed to fit your labels
+                  reservedSize: 40, // this value adjust to change labels
                 ),
               ),
               rightTitles:
-                  AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(show: false),
-            gridData: FlGridData(
-                show: false), // Set this to false to remove grid lines
+            gridData: const FlGridData(
+                show: false), // Setting this to false removes grid lines
             barGroups: List.generate(data.length, (index) {
               return BarChartGroupData(
                 x: index,

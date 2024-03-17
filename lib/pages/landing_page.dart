@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'dart:io'; // Import dart:io to use Platform.isIOS
+import 'package:logging/logging.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../navbar.dart';
 import '../services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+final Logger logger = Logger('LandingPage');
+
 class LandingPage extends StatelessWidget {
+  LandingPage({super.key});
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn();
 
@@ -18,11 +23,10 @@ class LandingPage extends StatelessWidget {
         AppleIDAuthorizationScopes.email,
         AppleIDAuthorizationScopes.fullName,
       ]);
-
-      print("Apple Sign In Debug:");
-      print("Given Name: ${appleCredential.givenName}");
-      print("Family Name: ${appleCredential.familyName}");
-      print("Email: ${appleCredential.email}");
+      logger.info("Apple Sign In Debug:");
+      logger.info("Given Name: ${appleCredential.givenName}");
+      logger.info("Family Name: ${appleCredential.familyName}");
+      logger.info("Email: ${appleCredential.email}");
 
       final oauthCredential = OAuthProvider("apple.com").credential(
         idToken: appleCredential.identityToken,
@@ -43,12 +47,12 @@ class LandingPage extends StatelessWidget {
               .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
         }
 
-        Navigator.of(context)
-            .pushReplacement(MaterialPageRoute(builder: (context) => NavBar()));
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const NavBar()));
       }
     } catch (error) {
-      print(error);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      logger.warning(error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Failed to sign in with Apple. Please try again.")));
     }
   }
@@ -88,12 +92,12 @@ class LandingPage extends StatelessWidget {
           }
 
           Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (context) => NavBar()));
+              MaterialPageRoute(builder: (context) => const NavBar()));
         }
       }
     } catch (error) {
-      print(error);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      logger.warning(error);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Failed to sign in with Google. Please try again.")));
     }
   }
@@ -102,8 +106,8 @@ class LandingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        padding: EdgeInsets.all(16), // Add some padding around the buttons
-        decoration: BoxDecoration(
+        padding: const EdgeInsets.all(16), // some padding around the buttons
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -114,14 +118,14 @@ class LandingPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Image.asset('assets/images/goic.png', width: 200, height: 200),
-            SizedBox(height: 50),
+            const SizedBox(height: 50),
             // Google Sign-In Button
             ElevatedButton(
               onPressed: () => _signInWithGoogle(context),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors
                     .white, // Google's brand recommends a white background
-                minimumSize: Size(
+                minimumSize: const Size(
                     double.infinity, 50), // Full-width button with fixed height
                 side: BorderSide(
                     color: Colors.grey.shade300), // Optional: border color
@@ -144,17 +148,18 @@ class LandingPage extends StatelessWidget {
                 ],
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             // Apple Sign-In Button - Conditionally rendered for iOS devices
             if (Platform.isIOS) // Check if the platform is iOS
               ElevatedButton.icon(
-                icon: Icon(Icons.apple, color: Colors.white), // Apple logo
-                label: Text('Continue with Apple ID',
+                icon:
+                    const Icon(Icons.apple, color: Colors.white), // Apple logo
+                label: const Text('Continue with Apple ID',
                     style: TextStyle(color: Colors.white)),
                 onPressed: () => _signInWithApple(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black, // Apple's brand color
-                  minimumSize: Size(double.infinity,
+                  minimumSize: const Size(double.infinity,
                       50), // Full-width button with fixed height
                 ),
               ),

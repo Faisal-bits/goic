@@ -14,10 +14,12 @@ Future<void> main() async {
   ); // Initialize Firebase
 
   await correctLikesCountTypes();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     const Color seedColor = Colors.blue;
@@ -26,7 +28,6 @@ class MyApp extends StatelessWidget {
       title: 'GOIC App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
-        // You can further customize other theme attributes based on the color scheme
         useMaterial3: true, // Enable Material 3 features
 
         primarySwatch: Colors.blue,
@@ -40,13 +41,13 @@ class MyApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.active) {
             // User is logged in
             if (snapshot.hasData) {
-              return NavBar();
+              return const NavBar();
             }
             // User is not logged in
             return LandingPage();
           }
           // Waiting for authentication state to be available
-          return Scaffold(
+          return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
             ),
@@ -54,8 +55,8 @@ class MyApp extends StatelessWidget {
         },
       ),
       routes: {
-        '/home': (context) => NavBar(),
-        // other routes as needed
+        '/home': (context) => const NavBar(),
+        // other routes ...
       },
     );
   }

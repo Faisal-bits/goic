@@ -2,10 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:math';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('FTrade');
 
 class FTradePage extends StatefulWidget {
+  const FTradePage({super.key});
+
   @override
-  _FTradePageState createState() => _FTradePageState();
+  State<FTradePage> createState() => _FTradePageState();
 }
 
 class _FTradePageState extends State<FTradePage> {
@@ -45,9 +50,9 @@ class _FTradePageState extends State<FTradePage> {
 
   Widget _buildSegmentedControl() {
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: CupertinoSegmentedControl<int>(
-        children: {
+        children: const {
           0: Padding(
             padding: EdgeInsets.symmetric(horizontal: 10),
             child: Text('Imports'),
@@ -67,7 +72,7 @@ class _FTradePageState extends State<FTradePage> {
           });
         },
         groupValue: selectedCategoryIndex,
-        // Add color properties here
+        // color properties here
         unselectedColor: const Color.fromARGB(
             255, 245, 252, 255), // Light blue color for unselected segments
         selectedColor:
@@ -83,25 +88,25 @@ class _FTradePageState extends State<FTradePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Foreign Trade Analysis'),
+        title: const Text('Foreign Trade Analysis'),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             _buildSearchCard(),
             _buildSegmentedControl(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               '${[
                 "Imports",
                 "Exports",
                 "Re-exports"
               ][selectedCategoryIndex]} - Summary',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildPieChart(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             _buildBarChart(),
           ],
         ),
@@ -112,7 +117,7 @@ class _FTradePageState extends State<FTradePage> {
   Widget _buildSearchCard() {
     return Column(
       children: [
-        Padding(
+        const Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Align(
             alignment: Alignment.centerLeft,
@@ -128,7 +133,7 @@ class _FTradePageState extends State<FTradePage> {
         ),
         Card(
           elevation: 1,
-          margin: EdgeInsets.symmetric(horizontal: 16),
+          margin: const EdgeInsets.symmetric(horizontal: 16),
           color: Colors.grey[50], // Light gray color for the card background
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -138,7 +143,7 @@ class _FTradePageState extends State<FTradePage> {
                   children: <Widget>[
                     Expanded(
                       child: DropdownButtonFormField<int>(
-                        decoration: InputDecoration(labelText: 'Year'),
+                        decoration: const InputDecoration(labelText: 'Year'),
                         value: selectedYear,
                         onChanged: (int? newValue) {
                           setState(() {
@@ -153,10 +158,10 @@ class _FTradePageState extends State<FTradePage> {
                         }),
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: DropdownButtonFormField<String>(
-                        decoration: InputDecoration(labelText: 'Product'),
+                        decoration: const InputDecoration(labelText: 'Product'),
                         value: selectedProduct,
                         onChanged: (String? newValue) {
                           setState(() {
@@ -178,18 +183,19 @@ class _FTradePageState extends State<FTradePage> {
                     ),
                   ],
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    // Implement search functionality
-                    print('Search clicked');
+                    // search functionality
+                    logger.info('Search clicked');
                   },
-                  child: Text(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor:
+                        Colors.blue, // Blue color for the search button
+                  ),
+                  child: const Text(
                     'Search',
                     style: TextStyle(color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    primary: Colors.blue, // Blue color for the search button
                   ),
                 ),
               ],
@@ -201,11 +207,11 @@ class _FTradePageState extends State<FTradePage> {
   }
 
   Widget _buildPieChart() {
-    return Container(
+    return SizedBox(
       height: 300,
       child: PieChart(
         PieChartData(
-          sections: getSections(currentData), // Pass the current dataset
+          sections: getSections(currentData), // current dataset
           centerSpaceRadius: 60,
           sectionsSpace: 2,
         ),
@@ -217,7 +223,6 @@ class _FTradePageState extends State<FTradePage> {
     List<BarChartGroupData> barGroups = [];
     int i = 0;
     currentData.forEach((country, value) {
-      // Use currentData here
       barGroups.add(
         BarChartGroupData(
           x: i++,
@@ -231,12 +236,12 @@ class _FTradePageState extends State<FTradePage> {
 
     return Padding(
       padding: const EdgeInsets.all(30.0),
-      child: Container(
+      child: SizedBox(
         height: 250,
         child: BarChart(
           BarChartData(
             alignment: BarChartAlignment.spaceAround,
-            maxY: currentData.values.reduce(max) * 1.2, // Use currentData here
+            maxY: currentData.values.reduce(max) * 1.2,
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
@@ -245,9 +250,8 @@ class _FTradePageState extends State<FTradePage> {
                     return Padding(
                       padding: const EdgeInsets.only(top: 6.0),
                       child: Text(
-                        currentData.keys
-                            .elementAt(value.toInt()), // Use currentData here
-                        style: TextStyle(fontSize: 10),
+                        currentData.keys.elementAt(value.toInt()),
+                        style: const TextStyle(fontSize: 10),
                       ),
                     );
                   },
@@ -259,20 +263,21 @@ class _FTradePageState extends State<FTradePage> {
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
                     return Text(value.toString(),
-                        style: TextStyle(fontSize: 10));
+                        style: const TextStyle(fontSize: 10));
                   },
                   reservedSize: 30,
                 ),
               ),
               rightTitles:
-                  AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles:
+                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
             ),
             borderData: FlBorderData(
               show: true,
-              border: Border(bottom: BorderSide(), left: BorderSide()),
+              border: const Border(bottom: BorderSide(), left: BorderSide()),
             ),
-            gridData: FlGridData(show: false),
+            gridData: const FlGridData(show: false),
             barGroups: barGroups,
           ),
         ),
@@ -287,7 +292,7 @@ class _FTradePageState extends State<FTradePage> {
         value: entry.value,
         title: entry.key,
         radius: 100,
-        titleStyle: TextStyle(color: Colors.white, fontSize: 16),
+        titleStyle: const TextStyle(color: Colors.white, fontSize: 16),
       );
     }).toList();
   }

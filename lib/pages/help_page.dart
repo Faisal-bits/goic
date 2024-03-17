@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
-import '../services/openai_service.dart'; // Adjust the import path as needed
+import '../services/openai_service.dart';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('HelpPage');
 
 class HelpPage extends StatefulWidget {
+  const HelpPage({super.key});
+
   @override
-  _HelpPageState createState() => _HelpPageState();
+  State<HelpPage> createState() => _HelpPageState();
 }
 
 class _HelpPageState extends State<HelpPage> {
@@ -17,7 +22,7 @@ class _HelpPageState extends State<HelpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Help'),
+        title: const Text('Help'),
         actions: [
           _customToggle(),
         ],
@@ -28,7 +33,7 @@ class _HelpPageState extends State<HelpPage> {
 
   Widget _customToggle() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 8.0),
+      margin: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
         color: Colors.white, // Background of the toggle
         borderRadius: BorderRadius.circular(20.0), // Rounded corners
@@ -51,8 +56,8 @@ class _HelpPageState extends State<HelpPage> {
         });
       },
       child: AnimatedContainer(
-        duration: Duration(milliseconds: 300),
-        padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         decoration: BoxDecoration(
           color:
               isSelected ? Colors.blue : Colors.transparent, // Highlight color
@@ -75,14 +80,14 @@ class _HelpPageState extends State<HelpPage> {
         _buildExpansionTile("What is this app?", "This app is..."),
         _buildExpansionTile("How do I use it?", "You can use it by..."),
         _buildExpansionTile("What is GID?", "GID stands for..."),
-        // Add more questions here
+        // More QnA questions as needed
       ],
     );
   }
 
   Widget _buildExpansionTile(String title, String answer) {
     return ExpansionTile(
-      title: Text(title, style: TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.all(16.0),
@@ -113,7 +118,7 @@ class _HelpPageState extends State<HelpPage> {
 
   Widget _buildChatMessage(String message, {bool isBot = false}) {
     return ListTile(
-      leading: isBot ? Icon(Icons.android) : null,
+      leading: isBot ? const Icon(Icons.android) : null,
       title: Text(
         message,
         style: TextStyle(
@@ -136,8 +141,7 @@ class _HelpPageState extends State<HelpPage> {
               decoration: InputDecoration(
                 hintText: "Type your message here...",
                 contentPadding: const EdgeInsets.symmetric(
-                    vertical: 10.0,
-                    horizontal: 12.0), // Adjust the padding here
+                    vertical: 10.0, horizontal: 12.0),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -149,20 +153,20 @@ class _HelpPageState extends State<HelpPage> {
                   padding: EdgeInsets.only(
                       left: 10), // Add padding when the loading icon is visible
                   child: SizedBox(
-                    height: 20.0, // Adjust as needed
-                    width: 20.0, // Adjust as needed
+                    height: 20.0,
+                    width: 20.0,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.0,
                     ),
                   ),
                 )
               : IconButton(
-                  icon: Icon(Icons.send),
+                  icon: const Icon(Icons.send),
                   onPressed: _sendMessage,
                 ),
           if (showChatbot) // This ensures the button is shown only in the chatbot interface
             IconButton(
-              icon: Icon(Icons.delete_outline),
+              icon: const Icon(Icons.delete_outline),
               onPressed: _clearChat,
             ),
         ],
@@ -174,7 +178,7 @@ class _HelpPageState extends State<HelpPage> {
     setState(() {
       messages.clear(); // Clears messages from the UI
       _openAIService
-          .clearChat(); // Optionally clear chat on the server or reset session
+          .clearChat(); // clear chat on the server or reset session as well
     });
   }
 
@@ -194,7 +198,7 @@ class _HelpPageState extends State<HelpPage> {
         });
       } catch (e) {
         // Handle error or show an error message if necessary
-        print("Failed to send message: $e");
+        logger.warning("Failed to send message: $e");
       } finally {
         setState(() {
           _isLoading = false; // Stop loading

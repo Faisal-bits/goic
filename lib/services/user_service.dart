@@ -1,4 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('UserService');
 
 class UserService {
   final CollectionReference _usersCollection =
@@ -17,8 +20,8 @@ class UserService {
             'lastName': lastName,
             'email': email,
           })
-          .then((value) => print("User Info Added"))
-          .catchError((error) => print("Failed to add user: $error"));
+          .then((value) => logger.info("User Info Added"))
+          .catchError((error) => logger.warning("Failed to add user: $error"));
     }
   }
 
@@ -31,8 +34,8 @@ class UserService {
           'lastName': lastName,
           'email': email,
         })
-        .then((value) => print("User Info Added"))
-        .catchError((error) => print("Failed to add user: $error"));
+        .then((value) => logger.info("User Info Added"))
+        .catchError((error) => logger.warning("Failed to add user: $error"));
   }
 
   Future<String?> getUserIdByEmail(String email) async {
@@ -45,7 +48,7 @@ class UserService {
         return querySnapshot.docs.first.id; // Return the user document ID
       }
     } catch (error) {
-      print("Error fetching user by email: $error");
+      logger.warning("Error fetching user by email: $error");
     }
     return null; // Return null if user not found or any error occurs
   }

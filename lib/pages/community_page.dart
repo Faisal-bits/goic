@@ -5,8 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'new_post.dart';
 
 class CommunityPage extends StatefulWidget {
+  const CommunityPage({super.key});
+
   @override
-  _CommunityPageState createState() => _CommunityPageState();
+  State<CommunityPage> createState() => _CommunityPageState();
 }
 
 class _CommunityPageState extends State<CommunityPage> {
@@ -15,14 +17,14 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Communities')),
+      appBar: AppBar(title: const Text('Communities')),
       body: StreamBuilder<List<Post>>(
         stream: _postService.getPosts(),
         builder: (context, snapshot) {
           if (snapshot.hasError) return Text('Error: ${snapshot.error}');
-          if (!snapshot.hasData)
-            return Center(child: CircularProgressIndicator());
-
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
           final posts = snapshot.data!;
           return ListView.builder(
             itemCount: posts.length,
@@ -47,8 +49,8 @@ class _CommunityPageState extends State<CommunityPage> {
                         onPressed: () async {
                           await _postService.likePost(post.postId);
                           setState(() {
-                            // This is a placeholder for any state updates you need to make.
-                            // Simply calling setState here tells Flutter to re-run build,
+                            // This is a placeholder for any state updates.
+                            // But simply calling setState here tells Flutter to re-run build,
                             // leading to the StreamBuilder being rebuilt with the updated stream.
                           });
                         },
@@ -63,10 +65,10 @@ class _CommunityPageState extends State<CommunityPage> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => NewPostScreen())),
+        onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const NewPostScreen())),
         tooltip: 'Create Post',
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }

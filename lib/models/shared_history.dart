@@ -25,7 +25,7 @@ Future<void> deleteSearchFromHistory(SearchConfig configToDelete) async {
     // Find the index of the config to delete based on its attributes
     int indexToDelete = stringList.indexWhere((stringConfig) {
       SearchConfig config = SearchConfig.fromJson(jsonDecode(stringConfig));
-      // Assuming 'date', 'year', 'isic', and 'status' combined can uniquely identify a search config
+      // Because 'date', 'year', 'isic', and 'status' combined can uniquely identify a search config
       return config.date == configToDelete.date &&
           config.year == configToDelete.year &&
           config.isic == configToDelete.isic &&

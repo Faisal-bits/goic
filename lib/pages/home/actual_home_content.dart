@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'gid_page.dart'; // Ensure this is the correct import path
-import 'f_trade_page.dart'; // Ensure this is the correct import path
-import 'socio_economic/socio_economic_search_page.dart'; // Ensure this is the correct import path
+import 'gid_page.dart';
+import 'f_trade_page.dart';
+import 'socio_economic/socio_economic_search_page.dart';
 
 class SectionContainer extends StatelessWidget {
   final String title;
@@ -37,21 +37,21 @@ class SectionContainer extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 48, color: Colors.white),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Colors.white),
             ),
             if (subtitle.isNotEmpty) ...[
-              SizedBox(height: 5),
+              const SizedBox(height: 5),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.white70),
+                style: const TextStyle(fontSize: 16, color: Colors.white70),
               ),
             ],
           ],
@@ -80,8 +80,8 @@ class TrendingItem extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: MediaQuery.of(context).size.width *
-            0.4, // Example width, adjust as needed
+        width:
+            MediaQuery.of(context).size.width * 0.4, // width, can be adjusted
         margin: const EdgeInsets.symmetric(horizontal: 8.0),
         padding: const EdgeInsets.all(16.0),
         decoration: BoxDecoration(
@@ -92,10 +92,10 @@ class TrendingItem extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, size: 48, color: Colors.white),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               title,
-              style: TextStyle(
+              style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Colors.white),
@@ -109,8 +109,10 @@ class TrendingItem extends StatelessWidget {
 }
 
 class ActualHomeContent extends StatefulWidget {
+  const ActualHomeContent({super.key});
+
   @override
-  _ActualHomeContentState createState() => _ActualHomeContentState();
+  State<ActualHomeContent> createState() => _ActualHomeContentState();
 }
 
 class _ActualHomeContentState extends State<ActualHomeContent> {
@@ -161,14 +163,13 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
       'type': 'Export',
       'change': '5% up from 2019'
     },
-    // Add more items as needed
   ];
 
   final Map<String, Color> countryColors = {
-    'Qatar': Color(0xFF8C1D40), // Maroon
-    'Saudi': Color(0xFF006D2C), // Green
-    'UAE': Colors.black, // Dark grey or black
-    'Bahrain': Colors.redAccent, // Bright red
+    'Qatar': const Color(0xFF8C1D40),
+    'Saudi': const Color(0xFF006D2C),
+    'UAE': Colors.black,
+    'Bahrain': Colors.redAccent,
   };
 
   @override
@@ -181,13 +182,13 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               "Welcome, $_userName",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.left,
             ),
           ),
-          SizedBox(height: 20), // Spacing after welcome message
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          const SizedBox(height: 20), // Spacing after welcome message
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
               "Trending 🔥",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -224,22 +225,22 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(
-                              8.0), // Reduced padding inside each trending item
+                              8.0), // padding inside each trending item
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
                                 "${item['country']} ${item['year']} ${item['type']}",
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              SizedBox(height: 5),
+                              const SizedBox(height: 5),
                               Text(
                                 item['change'],
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 14,
                                 ),
@@ -255,32 +256,32 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
               ),
             ),
           ),
-          SizedBox(height: 5), // Additional spacing between sections
+          const SizedBox(height: 5), // Additional spacing between sections
           SectionContainer(
             title: "GID",
             subtitle: "GCC Industrial Data",
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (context) => GIDPage())),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const GIDPage())),
             icon: Icons.pie_chart_outline,
             color: Colors.blue.shade600,
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           SectionContainer(
             title: "F Trade",
             subtitle: "Foreign Trade Statistics",
-            onTap: () => Navigator.push(
-                context, MaterialPageRoute(builder: (context) => FTradePage())),
+            onTap: () => Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const FTradePage())),
             icon: Icons.import_export,
             color: Colors.green.shade600,
           ),
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
           SectionContainer(
             title: "Socio Economic",
             subtitle: "Socioeconomic Insights",
             onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => SocioEconomicSearchPage())),
+                    builder: (context) => const SocioEconomicSearchPage())),
             icon: Icons.people_outline,
             color: Colors.purple.shade600,
           ),
