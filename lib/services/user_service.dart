@@ -34,4 +34,19 @@ class UserService {
         .then((value) => print("User Info Added"))
         .catchError((error) => print("Failed to add user: $error"));
   }
+
+  Future<String?> getUserIdByEmail(String email) async {
+    try {
+      final querySnapshot = await _usersCollection
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first.id; // Return the user document ID
+      }
+    } catch (error) {
+      print("Error fetching user by email: $error");
+    }
+    return null; // Return null if user not found or any error occurs
+  }
 }

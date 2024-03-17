@@ -158,6 +158,12 @@
       "languageVersion": "3.2"
     },
     {
+      "name": "fixnum",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/fixnum-1.1.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.19"
+    },
+    {
       "name": "fl_chart",
       "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/fl_chart-0.66.2",
       "packageUri": "lib/",
@@ -198,6 +204,66 @@
       "rootUri": "file:///Users/developer/development/flutter/packages/flutter_web_plugins",
       "packageUri": "lib/",
       "languageVersion": "3.2"
+    },
+    {
+      "name": "geocoding",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geocoding-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "geocoding_android",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geocoding_android-3.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "geocoding_ios",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geocoding_ios-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.17"
+    },
+    {
+      "name": "geocoding_platform_interface",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geocoding_platform_interface-3.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
+      "name": "geolocator",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geolocator-11.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "geolocator_android",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geolocator_android-4.5.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "geolocator_apple",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geolocator_apple-2.3.6",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "geolocator_platform_interface",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geolocator_platform_interface-4.2.2",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "geolocator_web",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geolocator_web-3.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "geolocator_windows",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/geolocator_windows-0.2.3",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
     },
     {
       "name": "google_identity_services_web",
@@ -326,6 +392,42 @@
       "languageVersion": "2.19"
     },
     {
+      "name": "permission_handler",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/permission_handler-11.3.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "permission_handler_android",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/permission_handler_android-12.0.5",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "permission_handler_apple",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/permission_handler_apple-9.4.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.15"
+    },
+    {
+      "name": "permission_handler_html",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/permission_handler_html-0.1.1",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
+    },
+    {
+      "name": "permission_handler_platform_interface",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/permission_handler_platform_interface-4.2.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.14"
+    },
+    {
+      "name": "permission_handler_windows",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/permission_handler_windows-0.2.1",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "petitparser",
       "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/petitparser-6.0.2",
       "packageUri": "lib/",
@@ -428,6 +530,12 @@
       "languageVersion": "2.18"
     },
     {
+      "name": "sprintf",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/sprintf-7.0.0",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "stack_trace",
       "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/stack_trace-1.11.1",
       "packageUri": "lib/",
@@ -462,6 +570,12 @@
       "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/typed_data-1.3.2",
       "packageUri": "lib/",
       "languageVersion": "2.17"
+    },
+    {
+      "name": "uuid",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/uuid-4.3.3",
+      "packageUri": "lib/",
+      "languageVersion": "3.0"
     },
     {
       "name": "vector_math",
@@ -506,7 +620,7 @@
       "languageVersion": "3.2"
     }
   ],
-  "generated": "2024-03-16T01:36:04.794368Z",
+  "generated": "2024-03-17T00:44:08.172901Z",
   "generator": "pub",
   "generatorVersion": "3.2.6"
 }

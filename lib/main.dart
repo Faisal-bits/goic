@@ -4,6 +4,7 @@ import 'pages/landing_page.dart';
 import 'navbar.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'utility/maintain.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding
@@ -11,15 +12,23 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   ); // Initialize Firebase
+
+  await correctLikesCountTypes();
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    const Color seedColor = Colors.blue;
+
     return MaterialApp(
       title: 'GOIC App',
       theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
+        // You can further customize other theme attributes based on the color scheme
+        useMaterial3: true, // Enable Material 3 features
+
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false,

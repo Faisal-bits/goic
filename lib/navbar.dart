@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-// Make sure these imports point to the correct files
+// Import your CommunityPage
+import 'pages/community_page.dart';
+// Continue with other imports
 import 'pages/help_page.dart';
 import 'pages/history_page.dart';
 import 'pages/profile_page.dart';
-import 'pages/home/actual_home_content.dart'; // This should be the widget you want to show as the home content
+import 'pages/home/actual_home_content.dart';
 
 class NavBar extends StatefulWidget {
   @override
@@ -13,27 +15,20 @@ class NavBar extends StatefulWidget {
 
 class _NavBarState extends State<NavBar> {
   int _selectedIndex = 0;
-  Key _historyPageKey = UniqueKey(); // Add this line
+  Key _historyPageKey = UniqueKey();
 
-  void refreshHistory() {
-    setState(() {
-      _historyPageKey =
-          UniqueKey(); // This generates a new key, forcing the widget to rebuild
-    });
-  }
-
-  // Updated to use a method to get the widget based on the selected index
   Widget _getWidgetOption(int index) {
     switch (index) {
       case 0:
         return ActualHomeContent();
       case 1:
-        return HelpPage();
+        return CommunityPage(); // Community Page is now right after Home
       case 2:
-        return HistoryPage(
-            key: _historyPageKey); // Now dynamically returning a new instance
+        return HelpPage();
       case 3:
-        return ProfilePage();
+        return HistoryPage(key: _historyPageKey);
+      case 4:
+        return ProfilePage(); // Profile Page is now at the very right
       default:
         return ActualHomeContent();
     }
@@ -50,19 +45,22 @@ class _NavBarState extends State<NavBar> {
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
-        // Use a method to generate the current widget based on the selected index
-        children: List<Widget>.generate(4, (index) => _getWidgetOption(index)),
+        children: List<Widget>.generate(5, (index) => _getWidgetOption(index)),
       ),
       bottomNavigationBar: CupertinoTabBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.home), label: 'Home'),
           BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: 'Community'), // Community icon next to Home
+          BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.question_circle), label: 'Help'),
           BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.clock), label: 'History'),
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person), label: 'Profile'),
+              icon: Icon(CupertinoIcons.person),
+              label: 'Profile'), // Profile icon at the very right
         ],
         currentIndex: _selectedIndex,
         activeColor: Colors.blue.shade600,

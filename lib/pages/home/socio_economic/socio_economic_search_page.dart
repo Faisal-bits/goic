@@ -10,14 +10,17 @@ class SocioEconomicSearchPage extends StatefulWidget {
 class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
   String selectedCountry = 'Bahrain'; // Default selection
   String selectedEconomicIndicator = 'GDP'; // Default economic indicator
+  String selectedIndustrialIndicator =
+      'Manufacturing'; // Default industrial indicator
 
   final List<Map<String, String>> countries = [
     {'name': 'Bahrain', 'flag': 'assets/flags/bahrain.png'},
-    {'name': 'Kuwait', 'flag': 'assets/flags/kuwait.jpeg'},
-    {'name': 'Oman', 'flag': 'assets/flags/oman.jpeg'},
+    {'name': 'Kuwait', 'flag': 'assets/flags/kuwait.png'},
+    {'name': 'Oman', 'flag': 'assets/flags/oman.png'},
     {'name': 'Qatar', 'flag': 'assets/flags/qatar.png'},
-    {'name': 'Saudi Arabia', 'flag': 'assets/flags/saudi.jpeg'},
-    {'name': 'UAE', 'flag': 'assets/flags/uae.jpeg'},
+    {'name': 'Saudi Arabia', 'flag': 'assets/flags/saudi.png'},
+    {'name': 'UAE', 'flag': 'assets/flags/uae.png'},
+    {'name': 'GCC', 'flag': 'assets/flags/gcc.png'},
   ];
 
   @override
@@ -28,91 +31,116 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
       ),
       body: Center(
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Wrap(
-                alignment: WrapAlignment.center,
-                spacing: 20,
-                runSpacing: 20,
-                children: countries.map((country) {
-                  bool isSelected = selectedCountry == country['name'];
-                  return GestureDetector(
-                    onTap: () {
+          child: Card(
+            elevation: 1,
+            color: Colors.grey[100], // Very light gray
+            margin: EdgeInsets.all(16),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: countries.map((country) {
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              selectedCountry = country['name']!;
+                            });
+                          },
+                          child: Container(
+                            margin: EdgeInsets.symmetric(
+                                horizontal: 8), // Add spacing between flags
+                            padding: EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: selectedCountry == country['name']
+                                    ? Colors.blue
+                                    : Colors.transparent,
+                                width: 2,
+                              ),
+                            ),
+                            child: CircleAvatar(
+                              backgroundImage: AssetImage(country['flag']!),
+                              radius: 30,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                  SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    decoration:
+                        InputDecoration(labelText: 'Economic Indicator'),
+                    value: selectedEconomicIndicator,
+                    onChanged: (newValue) {
                       setState(() {
-                        selectedCountry = country['name']!;
+                        selectedEconomicIndicator = newValue!;
                       });
                     },
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: EdgeInsets.all(isSelected
-                              ? 2
-                              : 0), // Padding for the border effect
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: isSelected
-                                ? Border.all(color: Colors.black, width: 2)
-                                : null,
-                          ),
-                          child: CircleAvatar(
-                            radius: 30,
-                            backgroundImage: AssetImage(country['flag']!),
+                    items: <String>['GDP', 'Inflation', 'Unemployment']
+                        .map<DropdownMenuItem<String>>((value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    decoration:
+                        InputDecoration(labelText: 'Industrial Indicator'),
+                    value: selectedIndustrialIndicator,
+                    onChanged: (newValue) {
+                      setState(() {
+                        selectedIndustrialIndicator = newValue!;
+                      });
+                    },
+                    items: <String>['Manufacturing', 'Construction', 'Services']
+                        .map<DropdownMenuItem<String>>((value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Navigate to result page with selected options
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SocioEconomicResultPage(
+                            country: selectedCountry,
+                            economicIndicator: selectedEconomicIndicator,
+                            industrialIndicator: selectedIndustrialIndicator,
                           ),
                         ),
-                        SizedBox(height: 8),
-                        Text(
-                          country['name']!,
-                          style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            color: isSelected ? Colors.black : null,
-                          ),
-                        ),
-                      ],
+                      );
+                    },
+                    child: Text(
+                      'Search',
+                      style: TextStyle(color: Colors.white), // Text color
                     ),
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 20),
-              Text(
-                "Select an Economic Indicator",
-                style: Theme.of(context).textTheme.headline6,
-              ),
-              DropdownButton<String>(
-                value: selectedEconomicIndicator,
-                onChanged: (String? newValue) {
-                  setState(() {
-                    selectedEconomicIndicator = newValue!;
-                  });
-                },
-                items: <String>['GDP', 'Inflation', 'Unemployment']
-                    .map<DropdownMenuItem<String>>((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-              ),
-              SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SocioEconomicResultPage(
-                          selectedCountry, selectedEconomicIndicator),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.blue, // Background color
+                      onPrimary:
+                          Colors.white, // This will affect the text color
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
                     ),
-                  );
-                },
-                child: Text('Search'),
-                style: ElevatedButton.styleFrom(
-                  primary: Colors.blue[
-                      700], // Use a specific shade of blue to match your app theme
-                  onPrimary: Colors.white, // foreground
-                  padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
