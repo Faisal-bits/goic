@@ -5,6 +5,7 @@ import 'navbar.dart';
 import 'firebase_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'utility/maintain.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding
@@ -14,7 +15,15 @@ Future<void> main() async {
   ); // Initialize Firebase
 
   await correctLikesCountTypes();
-  runApp(const MyApp());
+
+  runApp(
+    EasyLocalization(
+      supportedLocales: [Locale('en'), Locale('ar')],
+      path: 'assets/translations',
+      fallbackLocale: Locale('en'),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -29,24 +38,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: seedColor),
         useMaterial3: true, // Enable Material 3 features
-
         primarySwatch: Colors.blue,
       ),
       debugShowCheckedModeBanner: false,
-      // Instead of directly setting the home property, using a builder to decide
-      // which initial route to use based on the authentication state.
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.active) {
-            // User is logged in
             if (snapshot.hasData) {
               return const NavBar();
             }
-            // User is not logged in
-            return LandingPage();
+            return const NavBar(); // or LandingPage();
           }
-          // Waiting for authentication state to be available
           return const Scaffold(
             body: Center(
               child: CircularProgressIndicator(),
@@ -58,6 +61,9 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const NavBar(),
         // other routes ...
       },
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
     );
   }
 }

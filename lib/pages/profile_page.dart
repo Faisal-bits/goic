@@ -1,8 +1,11 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'landing_page.dart';
 import 'package:logging/logging.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 final Logger logger = Logger('ProfilePage');
 
@@ -38,7 +41,7 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Profile"),
+        title: Text('profile_page_title'.tr()),
       ),
       body: Column(
         mainAxisAlignment:
@@ -56,15 +59,21 @@ class ProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: 20), // Spacing after the profile picture
               ElevatedButton(
-                onPressed: () {
-                  logger.info(
-                      "Language switch button pressed"); // Placeholder for language switch functionality
-                },
+                onPressed: () => context.locale = Locale('en'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.lightBlue, // Button color
                   foregroundColor: Colors.white, // Text color
                 ),
-                child: const Text('Language / اللغة'),
+                child: const Text('عربي'),
+              ),
+              const SizedBox(height: 10), // Provide spacing between buttons
+              ElevatedButton(
+                onPressed: () => context.locale = Locale('ar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.lightBlue, // Button color
+                  foregroundColor: Colors.white, // Text color
+                ),
+                child: const Text('English'),
               ),
             ],
           ),
@@ -83,7 +92,7 @@ class ProfilePage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(30), // Rounded corners
                 ),
               ),
-              child: const Text('Logout'),
+              child: Text('logout_btn'.tr()),
             ),
           ),
         ],
