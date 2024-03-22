@@ -1,89 +1,86 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'landing_page.dart';
 import 'package:logging/logging.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'landing_page.dart';
+import '../localization.dart';
+import '../main.dart';
 
 final Logger logger = Logger('ProfilePage');
 
 class ProfilePage extends StatelessWidget {
-  ProfilePage({super.key});
+  ProfilePage({Key? key}) : super(key: key);
 
-  // Initialize GoogleSignIn
   final GoogleSignIn googleSignIn = GoogleSignIn();
 
   Future<void> _signOut(BuildContext context) async {
     try {
-      // Attempt to sign out from Google first
       await googleSignIn.signOut();
       logger.info('Google user signed out.');
-
-      // Then, sign out from Firebase Auth
       await FirebaseAuth.instance.signOut();
       logger.info('Firebase user signed out.');
-
-      // After successfully signing out, navigate to the LandingPage
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => LandingPage()),
-      );
+          MaterialPageRoute(builder: (context) => LandingPage()));
     } catch (error) {
       logger.warning("Error signing out: $error");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error signing out: $error")),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("Error signing out: $error")));
     }
+  }
+
+  Future<void> _toggleLanguage(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    bool isArabic = prefs.getString('language_code') == 'ar';
+    // Corrected call to the top-level changeLocale function
+    await prefs.setString('language_code', isArabic ? 'en' : 'ar');
+    changeLocale(
+        context, isArabic ? 'en' : 'ar'); // Correct way to call changeLocale
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Profile"),
+        title: Text(AppLocalizations.of(context)?.profile ?? "Profile"),
       ),
       body: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.spaceBetween, // Space out the main axis
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Column(
             children: [
-              const SizedBox(
-                  height: 20), // Provide some spacing from the app bar
+              const SizedBox(height: 20),
               CircleAvatar(
-                radius: 60, // Size of the profile picture
-                backgroundImage: const NetworkImage(
-                    'https://via.placeholder.com/150'), // Example image
+                radius: 60,
+                backgroundImage:
+                    const NetworkImage('https://via.placeholder.com/150'),
                 backgroundColor: Colors.grey.shade200,
               ),
-              const SizedBox(height: 20), // Spacing after the profile picture
+              const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  logger.info(
-                      "Language switch button pressed"); // Placeholder for language switch functionality
-                },
+                onPressed: () => _toggleLanguage(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.lightBlue, // Button color
-                  foregroundColor: Colors.white, // Text color
+                  backgroundColor: Colors.lightBlue,
+                  foregroundColor: Colors.white,
                 ),
-                child: const Text('Language / اللغة'),
+                child: Text(AppLocalizations.of(context)?.language ??
+                    'Language / اللغة'),
               ),
             ],
           ),
           Padding(
-            padding:
-                const EdgeInsets.all(16.0), // Padding around the logout button
+            padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
-              onPressed: () =>
-                  _signOut(context), // Call the updated sign-out function
-
+              onPressed: () => _signOut(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red, // Button color
-                foregroundColor: Colors.white, // Text color
-                minimumSize: const Size(double.infinity, 50), // Button size
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30), // Rounded corners
+                  borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: const Text('Logout'),
+              child: Text(AppLocalizations.of(context)?.logout ?? 'Logout'),
             ),
           ),
         ],

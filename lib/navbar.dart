@@ -5,9 +5,10 @@ import 'pages/help_page.dart';
 import 'pages/history_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/home/actual_home_content.dart';
+import 'localization.dart'; // Make sure this import is correct
 
 class NavBar extends StatefulWidget {
-  const NavBar({super.key});
+  const NavBar({Key? key}) : super(key: key);
 
   @override
   State<NavBar> createState() => _NavBarState();
@@ -42,22 +43,31 @@ class _NavBarState extends State<NavBar> {
 
   @override
   Widget build(BuildContext context) {
+    // Fetch the localized strings
+    final localization = AppLocalizations.of(context);
+
     return Scaffold(
       body: IndexedStack(
         index: _selectedIndex,
         children: List<Widget>.generate(5, (index) => _getWidgetOption(index)),
       ),
       bottomNavigationBar: CupertinoTabBar(
-        items: const <BottomNavigationBarItem>[
+        items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
+              icon: Icon(CupertinoIcons.home),
+              label: localization?.home ?? 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.question_circle), label: 'Help'),
+              icon: Icon(Icons.people),
+              label: localization?.community ?? 'Community'),
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.clock), label: 'History'),
+              icon: Icon(CupertinoIcons.question_circle),
+              label: localization?.help ?? 'Help'),
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person), label: 'Profile'),
+              icon: Icon(CupertinoIcons.clock),
+              label: localization?.history ?? 'History'),
+          BottomNavigationBarItem(
+              icon: Icon(CupertinoIcons.person),
+              label: localization?.profile ?? 'Profile'),
         ],
         currentIndex: _selectedIndex,
         activeColor: Colors.blue.shade600,
