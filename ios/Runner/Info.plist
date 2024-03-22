@@ -56,5 +56,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Upload a photo for your profile picture.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take a photo for your profile picture.</string>
 </dict>
 </plist>

@@ -57,6 +57,12 @@ class AppLocalizations {
       'Kuwait': 'Kuwait',
       'upFrom': 'up from',
       'downFrom': 'down from',
+      'firstName': 'First Name',
+      'lastName': 'Last Name',
+      'updateProfile': 'Update Profile',
+      'saveChanges': 'Save Changes',
+      'edit': 'Edit',
+      'cancel': 'Cancel',
     },
     'ar': {
       'home': 'الرئيسية',
@@ -105,6 +111,12 @@ class AppLocalizations {
       'Kuwait': 'الكويت',
       'upFrom': 'زيادة من',
       'downFrom': 'انخفاض من',
+      'firstName': 'الاسم الأول',
+      'lastName': 'اسم العائلة',
+      'updateProfile': 'تحديث الملف الشخصي',
+      'saveChanges': 'حفظ التغييرات',
+      'edit': 'تعديل',
+      'cancel': 'إلغاء',
     },
   };
 
@@ -273,6 +285,27 @@ class AppLocalizations {
 
   String getDownFrom() =>
       _localizedValues[locale.languageCode]?['downFrom'] ?? 'down from';
+
+  String get firstName {
+    return _localizedValues[locale.languageCode]?['firstName'] ?? 'First Name';
+  }
+
+  String get lastName {
+    return _localizedValues[locale.languageCode]?['lastName'] ?? 'Last Name';
+  }
+
+  String get saveChanges {
+    return _localizedValues[locale.languageCode]?['saveChanges'] ??
+        'Save Changes';
+  }
+
+  String get edit {
+    return _localizedValues[locale.languageCode]?['edit'] ?? 'Edit';
+  }
+
+  String get cancel {
+    return _localizedValues[locale.languageCode]?['cancel'] ?? 'Cancel';
+  }
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -29,7 +29,7 @@ class _NavBarState extends State<NavBar> {
       case 3:
         return HistoryPage(key: _historyPageKey);
       case 4:
-        return ProfilePage();
+        return const ProfilePage();
       default:
         return const ActualHomeContent();
     }

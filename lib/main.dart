@@ -17,23 +17,24 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-Future<void> changeLocale(BuildContext context, String languageCode) async {
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString('language_code', languageCode);
-
-  // Triggering a rebuild of MyApp from here
-  runApp(MyApp(key: UniqueKey()));
-}
-
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale? _locale;
+  Locale _locale = const Locale('en');
+
+  void setLocale(Locale locale) {
+    setState(() {
+      _locale = locale;
+    });
+  }
 
   @override
   void initState() {
