@@ -3,6 +3,7 @@ import '../models/post.dart';
 import '../services/post_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'new_post.dart';
+import 'package:goic/localization.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -17,7 +18,9 @@ class _CommunityPageState extends State<CommunityPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Communities')),
+      appBar: AppBar(
+          title:
+              Text(AppLocalizations.of(context)?.communities ?? 'Communities')),
       body: StreamBuilder<List<Post>>(
         stream: _postService.getPosts(),
         builder: (context, snapshot) {

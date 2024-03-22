@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_service.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:logging/logging.dart';
+import 'package:goic/localization.dart';
 
 final Logger logger = Logger('NewPost');
 
@@ -106,16 +107,22 @@ class _NewPostScreenState extends State<NewPostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Post')),
+      appBar: AppBar(
+        title: Text(localizations?.createPost ?? 'Create Post'),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _controller,
-              decoration:
-                  const InputDecoration(labelText: "What's on your mind?"),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)?.whatsOnYourMind ??
+                    "What's on your mind?",
+              ),
               maxLines: null,
             ),
             const SizedBox(height: 20),
@@ -125,7 +132,8 @@ class _NewPostScreenState extends State<NewPostScreen> {
                 foregroundColor: Colors.white, // Text color
                 backgroundColor: Colors.blue, // Button background color
               ),
-              child: const Text('Submit Post'),
+              child: Text(
+                  AppLocalizations.of(context)?.submitPost ?? 'Submit Post'),
             ),
           ],
         ),

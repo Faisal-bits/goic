@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'gid_page.dart';
 import 'f_trade_page.dart';
 import 'socio_economic/socio_economic_search_page.dart';
+import 'package:goic/localization.dart';
 
 class SectionContainer extends StatelessWidget {
   final String title;
@@ -174,6 +175,45 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
+    List<Widget> buildTrendingItems() {
+      return trendingData.map((item) {
+        final countryName = localizations.getCountryName(item['country']);
+        // Make sure to pass the type in the correct case expected by your localization map.
+        final typeDescription =
+            localizations.getTypeDescription(item['type'].toLowerCase());
+        final changeDescription = localizations.translateChange(item['change']);
+
+        final itemDescription =
+            "$countryName ${item['year']} $typeDescription, $changeDescription";
+
+        final itemColor = countryColors[item['country']] ?? Colors.grey;
+
+        return Container(
+          width: MediaQuery.of(context).size.width * 0.6,
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+          decoration: BoxDecoration(
+            color: itemColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Center(
+            // Center widget added to center text vertically
+            child: Text(
+              itemDescription,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        );
+      }).toList();
+    }
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.only(top: 40),
@@ -181,19 +221,18 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              "Welcome, $_userName",
+              localizations.welcome(_userName),
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.left,
+              textAlign: TextAlign.start,
             ),
           ),
-          const SizedBox(height: 20), // Spacing after welcome message
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: Text(
-              "Trending 🔥",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              textAlign:
-                  TextAlign.left, // Aligns the Trending title to the left
+              localizations.trending,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.start,
             ),
           ),
           Container(
@@ -208,58 +247,19 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
                 child: SizedBox(
-                  height: 150,
-                  child: ListView.builder(
+                  height: 150, // Adjust as needed for vertical space
+                  child: ListView(
                     scrollDirection: Axis.horizontal,
-                    itemCount: trendingData.length,
-                    itemBuilder: (context, index) {
-                      final item = trendingData[index];
-                      final itemColor =
-                          countryColors[item['country']] ?? Colors.grey;
-                      return Container(
-                        width: MediaQuery.of(context).size.width * 0.6,
-                        margin: const EdgeInsets.symmetric(horizontal: 8),
-                        decoration: BoxDecoration(
-                          color: itemColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(
-                              8.0), // padding inside each trending item
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "${item['country']} ${item['year']} ${item['type']}",
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                item['change'],
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
+                    children: buildTrendingItems(),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 5), // Additional spacing between sections
+          const SizedBox(height: 5),
           SectionContainer(
-            title: "GID",
-            subtitle: "GCC Industrial Data",
+            title: localizations.gid,
+            subtitle: "",
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const GIDPage())),
             icon: Icons.pie_chart_outline,
@@ -267,8 +267,8 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
           ),
           const SizedBox(height: 5),
           SectionContainer(
-            title: "F Trade",
-            subtitle: "Foreign Trade Statistics",
+            title: localizations.fTrade,
+            subtitle: "",
             onTap: () => Navigator.push(context,
                 MaterialPageRoute(builder: (context) => const FTradePage())),
             icon: Icons.import_export,
@@ -276,8 +276,8 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
           ),
           const SizedBox(height: 5),
           SectionContainer(
-            title: "Socio Economic",
-            subtitle: "Socioeconomic Insights",
+            title: localizations.socioEconomic,
+            subtitle: "",
             onTap: () => Navigator.push(
                 context,
                 MaterialPageRoute(

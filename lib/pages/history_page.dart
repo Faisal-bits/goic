@@ -5,6 +5,7 @@ import 'home/gid_page.dart';
 import '/models/search_config.dart';
 import '/models/shared_history.dart';
 import '/models/history_notifier.dart';
+import 'package:goic/localization.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -17,12 +18,13 @@ class _HistoryPageState extends State<HistoryPage> {
   late Future<List<SearchConfig>> _searchHistoryFuture;
 
   String determineDatabaseType(SearchConfig config) {
+    final localizations = AppLocalizations.of(context);
     if (config.isic?.isNotEmpty ?? false) {
-      return "GID";
+      return localizations?.gid ?? "GID";
     } else if (config.country?.isNotEmpty ?? false) {
-      return "Socio Economic";
+      return localizations?.socioEconomic ?? "Socio Economic";
     } else {
-      return "F Trade";
+      return localizations?.fTrade ?? "F Trade";
     }
   }
 
@@ -51,7 +53,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Widget _buildHistoryItem(SearchConfig config, int index) {
-    // Determine the database type based on the config's properties
+    final localizations = AppLocalizations.of(context);
     String databaseType = determineDatabaseType(config);
 
     return Slidable(
@@ -66,7 +68,7 @@ class _HistoryPageState extends State<HistoryPage> {
             onPressed: (context) => _deleteSearchConfig(config),
             backgroundColor: Colors.red,
             icon: Icons.delete,
-            label: 'Delete',
+            label: localizations?.delete ?? 'Delete',
             autoClose: false,
           ),
         ],
@@ -93,6 +95,7 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Widget _buildGroupedSearches(List<SearchConfig> searchHistory) {
+    final localizations = AppLocalizations.of(context);
     Map<String, List<SearchConfig>> groupedByDate = {};
 
     for (var config in searchHistory) {
@@ -110,11 +113,11 @@ class _HistoryPageState extends State<HistoryPage> {
       DateTime now = DateTime.now();
       DateTime yesterday = now.subtract(const Duration(days: 1));
       if (DateFormat('yyyy-MM-dd').format(now) == date) {
-        title = "Today's Searches";
+        title = localizations?.todaysSearches ?? "Today's Searches";
       } else if (DateFormat('yyyy-MM-dd').format(yesterday) == date) {
-        title = "Yesterday's Searches";
+        title = localizations?.yesterdaysSearches ?? "Yesterday's Searches";
       } else {
-        title = "Searches on $date";
+        title = "${localizations?.searchesOn ?? 'Searches on'} $date";
       }
 
       groupedWidgets.add(Padding(
@@ -135,9 +138,11 @@ class _HistoryPageState extends State<HistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search History'),
+        title: Text(localizations?.searchHistory ?? 'Search History'),
       ),
       body: FutureBuilder<List<SearchConfig>>(
         future: _searchHistoryFuture,
@@ -146,7 +151,9 @@ class _HistoryPageState extends State<HistoryPage> {
             return const Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('No recent searches'));
+            return Center(
+                child: Text(
+                    localizations?.noRecentSearches ?? 'No recent searches'));
           }
 
           return _buildGroupedSearches(snapshot.data!);

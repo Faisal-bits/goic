@@ -5,7 +5,7 @@ import 'pages/help_page.dart';
 import 'pages/history_page.dart';
 import 'pages/profile_page.dart';
 import 'pages/home/actual_home_content.dart';
-import 'localization.dart'; // Make sure this import is correct
+import 'localization.dart';
 
 class NavBar extends StatefulWidget {
   const NavBar({Key? key}) : super(key: key);
@@ -54,19 +54,19 @@ class _NavBarState extends State<NavBar> {
       bottomNavigationBar: CupertinoTabBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.home),
+              icon: const Icon(CupertinoIcons.home),
               label: localization?.home ?? 'Home'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.people),
+              icon: const Icon(Icons.people),
               label: localization?.community ?? 'Community'),
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.question_circle),
+              icon: const Icon(CupertinoIcons.question_circle),
               label: localization?.help ?? 'Help'),
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.clock),
+              icon: const Icon(CupertinoIcons.clock),
               label: localization?.history ?? 'History'),
           BottomNavigationBarItem(
-              icon: Icon(CupertinoIcons.person),
+              icon: const Icon(CupertinoIcons.person),
               label: localization?.profile ?? 'Profile'),
         ],
         currentIndex: _selectedIndex,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/openai_service.dart';
 import 'package:logging/logging.dart';
+import 'package:goic/localization.dart';
 
 final Logger logger = Logger('HelpPage');
 
@@ -20,9 +21,11 @@ class _HelpPageState extends State<HelpPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help'),
+        title: Text(localizations?.help ?? 'Help'),
         actions: [
           _customToggle(),
         ],
@@ -32,6 +35,7 @@ class _HelpPageState extends State<HelpPage> {
   }
 
   Widget _customToggle() {
+    final localizations = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8.0),
       decoration: BoxDecoration(
@@ -41,18 +45,20 @@ class _HelpPageState extends State<HelpPage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _toggleOption('Info', !showChatbot),
-          _toggleOption('ChatBot', showChatbot),
+          _toggleOption(localizations?.info ?? 'Info', !showChatbot),
+          _toggleOption(localizations?.chatBot ?? 'ChatBot', showChatbot),
         ],
       ),
     );
   }
 
   Widget _toggleOption(String title, bool isSelected) {
+    final localizations = AppLocalizations.of(context);
     return GestureDetector(
       onTap: () {
         setState(() {
-          showChatbot = (title == 'ChatBot');
+          // Update the condition to check against the localized string
+          showChatbot = (title == localizations?.chatBot);
         });
       },
       child: AnimatedContainer(
@@ -75,11 +81,15 @@ class _HelpPageState extends State<HelpPage> {
   }
 
   Widget _infoPage() {
+    final localizations = AppLocalizations.of(context);
     return ListView(
       children: <Widget>[
-        _buildExpansionTile("What is this app?", "This app is..."),
-        _buildExpansionTile("How do I use it?", "You can use it by..."),
-        _buildExpansionTile("What is GID?", "GID stands for..."),
+        _buildExpansionTile(localizations?.whatIsThisApp ?? "What is this app?",
+            localizations?.appExplanation ?? "This app is..."),
+        _buildExpansionTile(localizations?.howDoIUseIt ?? "How do I use it?",
+            localizations?.usageInstructions ?? "You can use it by..."),
+        _buildExpansionTile(localizations?.whatIsGID ?? "What is GID?",
+            localizations?.gidExplanation ?? "GID stands for..."),
         // More QnA questions as needed
       ],
     );
@@ -131,6 +141,7 @@ class _HelpPageState extends State<HelpPage> {
   }
 
   Widget _buildTextInputField() {
+    final localizations = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Row(
@@ -139,7 +150,8 @@ class _HelpPageState extends State<HelpPage> {
             child: TextField(
               controller: _textEditingController,
               decoration: InputDecoration(
-                hintText: "Type your message here...",
+                hintText: localizations?.typeYourMessageHere ??
+                    "Type your message here...",
                 contentPadding: const EdgeInsets.symmetric(
                     vertical: 10.0, horizontal: 12.0),
                 border: OutlineInputBorder(

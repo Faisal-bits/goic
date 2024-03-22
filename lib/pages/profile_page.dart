@@ -32,10 +32,8 @@ class ProfilePage extends StatelessWidget {
   Future<void> _toggleLanguage(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     bool isArabic = prefs.getString('language_code') == 'ar';
-    // Corrected call to the top-level changeLocale function
     await prefs.setString('language_code', isArabic ? 'en' : 'ar');
-    changeLocale(
-        context, isArabic ? 'en' : 'ar'); // Correct way to call changeLocale
+    changeLocale(context, isArabic ? 'en' : 'ar');
   }
 
   @override
