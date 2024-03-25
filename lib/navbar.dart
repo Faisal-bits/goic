@@ -16,7 +16,6 @@ class NavBar extends StatefulWidget {
 
 class _NavBarState extends State<NavBar> {
   int _selectedIndex = 0;
-  final Key _historyPageKey = UniqueKey();
 
   Widget _getWidgetOption(int index) {
     switch (index) {
@@ -27,7 +26,7 @@ class _NavBarState extends State<NavBar> {
       case 2:
         return const HelpPage();
       case 3:
-        return HistoryPage(key: _historyPageKey);
+        return const HistoryPage();
       case 4:
         return const ProfilePage();
       default:

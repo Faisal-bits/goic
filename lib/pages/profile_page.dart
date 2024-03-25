@@ -29,6 +29,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
+  String _initialFirstName = '';
+  String _initialLastName = '';
 
   User? user;
   String? _profilePicUrl;
@@ -48,6 +50,9 @@ class _ProfilePageState extends State<ProfilePage> {
         _firstNameController.text = userData.data()?['firstName'] ?? '';
         _lastNameController.text = userData.data()?['lastName'] ?? '';
         _profilePicUrl = userData.data()?['profilePicUrl'];
+        // Store the initial state.
+        _initialFirstName = _firstNameController.text;
+        _initialLastName = _lastNameController.text;
       });
     }
   }
@@ -213,7 +218,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       onPressed: () {
                         setState(() {
                           _isEditing = false;
-                          // Optionally reset the controllers to their initial state
+                          // Reset the controllers to their initial state.
+                          _firstNameController.text = _initialFirstName;
+                          _lastNameController.text = _initialLastName;
                         });
                       },
                       child: Text(
@@ -290,6 +297,10 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildLanguageToggleButton() {
     return ElevatedButton(
       onPressed: () => _toggleLanguage(context),
+      style: ElevatedButton.styleFrom(
+        minimumSize:
+            const Size(200, 50), // Adjust the width and height as needed
+      ),
       child: Text(AppLocalizations.of(context)?.language ?? 'Language / اللغة'),
     );
   }
