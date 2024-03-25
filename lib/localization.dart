@@ -35,9 +35,12 @@ class AppLocalizations {
       'whatIsThisApp': 'What is this app?',
       'howDoIUseIt': 'How do I use it?',
       'whatIsGID': 'What is GID?',
-      'appExplanation': 'This app is...',
-      'usageInstructions': 'You can use it by...',
-      'gidExplanation': 'GID stands for...',
+      'appExplanation':
+          "This app is a mobile platform designed to make the Gulf Organization for Industrial Consulting (GOIC)'s rich databases on industrial development, economic information, and market trends in the GCC region accessible and user-friendly. It aims to promote entrepreneurship by providing real-time data on market and sector performance to both seasoned and novice investors.",
+      'usageInstructions':
+          'You can use it by registering and logging in with Firebase via Google, Apple, or email. Navigate through the app to access key widgets displaying GID, F Trade, and Socio-economic status. Utilize the history page to track past queries and interactions, and employ the help page for FAQs about the app and data systems.',
+      'gidExplanation':
+          'GID stands for Gulf Industrial Data, which includes comprehensive market analysis, investment opportunities, and industrial studies across the GCC. This data helps organizations and investors to make informed decisions by providing insights into more than 20 different market sectors in the region.',
       'typeYourMessageHere': 'Type your message here...',
       'communities': 'Communities',
       'createPost': 'Create Post',
@@ -89,9 +92,12 @@ class AppLocalizations {
       'whatIsThisApp': 'ما هذا التطبيق؟',
       'howDoIUseIt': 'كيف أستخدمه؟',
       'whatIsGID': 'ما هو GID؟',
-      'appExplanation': 'هذا التطبيق هو...',
-      'usageInstructions': 'يمكنك استخدامه عن طريق...',
-      'gidExplanation': 'GID يعني...',
+      'appExplanation':
+          'هذا التطبيق هو منصة متنقلة مصممة لجعل قواعد البيانات الغنية لمنظمة الخليج للاستشارات الصناعية (GOIC) حول التنمية الصناعية، المعلومات الاقتصادية، واتجاهات السوق في منطقة الخليج سهلة الوصول وودية للمستخدم. يهدف إلى تعزيز ريادة الأعمال من خلال توفير بيانات في الوقت الفعلي عن أداء السوق والقطاع لكل من المستثمرين المتمرسين والجدد.',
+      'usageInstructions':
+          'يمكنك استخدامه بالتسجيل والدخول عبر Firebase باستخدام Google، Apple، أو البريد الإلكتروني. تنقل عبر التطبيق للوصول إلى الأدوات الرئيسية التي تعرض GID، F Trade، والحالة الاقتصادية الاجتماعية. استخدم صفحة السجل لتتبع الاستعلامات والتفاعلات السابقة، واستفد من صفحة المساعدة للأسئلة الشائعة حول التطبيق وأنظمة البيانات.',
+      'gidExplanation':
+          'GID يعني بيانات الصناعة بالخليج، والتي تشمل تحليلات السوق الشاملة، فرص الاستثمار، والدراسات الصناعية عبر دول مجلس التعاون الخليجي. تساعد هذه البيانات المنظمات والمستثمرين على اتخاذ قرارات مستنيرة من خلال توفير رؤى حول أكثر من 20 قطاع سوق مختلف في المنطقة.',
       'typeYourMessageHere': 'اكتب رسالتك هنا...',
       'communities': 'المجتمعات',
       'createPost': 'إنشاء منشور',
