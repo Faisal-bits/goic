@@ -78,7 +78,7 @@ class _MyAppState extends State<MyApp> {
             if (snapshot.hasData) {
               return const NavBar();
             }
-            return LandingPage();
+            return const LandingPage();
           }
           return const Scaffold(
             body: Center(

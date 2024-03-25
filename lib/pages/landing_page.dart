@@ -10,11 +10,43 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 final Logger logger = Logger('LandingPage');
 
-class LandingPage extends StatelessWidget {
-  LandingPage({super.key});
+class LandingPage extends StatefulWidget {
+  const LandingPage({super.key});
 
+  @override
+  _LandingPageState createState() => _LandingPageState();
+}
+
+class _LandingPageState extends State<LandingPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn();
+  final UserService _userService = UserService();
+
+  // Text editing controllers
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  // Focus Nodes
+  final FocusNode _firstNameFocus = FocusNode();
+  final FocusNode _lastNameFocus = FocusNode();
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+
+  @override
+  void dispose() {
+    // Dispose controllers and focus nodes
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _firstNameFocus.dispose();
+    _lastNameFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    super.dispose();
+  }
 
   Future<void> _signInWithApple(BuildContext context) async {
     try {
@@ -102,6 +134,171 @@ class LandingPage extends StatelessWidget {
     }
   }
 
+  Future<void> _createUserAccount(BuildContext context, String email,
+      String password, String firstName, String lastName) async {
+    try {
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+      User? user = userCredential.user;
+      if (user != null) {
+        await user.updateDisplayName("$firstName $lastName");
+
+        // Using UserService to save user info to Firestore
+        await _userService.saveUserInfoToFirestore(
+            user.uid, firstName, lastName, email);
+
+        // Navigate to the main screen
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const NavBar()));
+      }
+    } on FirebaseAuthException catch (e) {
+      logger.warning(e);
+    }
+  }
+
+  void _showSignInOrRegisterSheet(BuildContext context,
+      {bool isRegister = false}) {
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+    final TextEditingController firstNameController = TextEditingController();
+    final TextEditingController lastNameController = TextEditingController();
+
+    showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext bc) {
+          final bottomInset = MediaQuery.of(bc).viewInsets.bottom;
+          return Padding(
+            padding: EdgeInsets.only(bottom: bottomInset),
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (isRegister) ...[
+                      TextField(
+                        controller: firstNameController,
+                        decoration:
+                            const InputDecoration(labelText: 'First Name'),
+                        textInputAction: TextInputAction.next,
+                      ),
+                      TextField(
+                        controller: lastNameController,
+                        decoration:
+                            const InputDecoration(labelText: 'Last Name'),
+                        textInputAction: TextInputAction.next,
+                      ),
+                    ],
+                    TextField(
+                      controller: emailController,
+                      decoration: const InputDecoration(labelText: 'Email'),
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
+                    ),
+                    TextField(
+                      controller: passwordController,
+                      decoration: const InputDecoration(labelText: 'Password'),
+                      obscureText: true,
+                      textInputAction: isRegister
+                          ? TextInputAction.done
+                          : TextInputAction.next,
+                      onSubmitted: (_) => isRegister
+                          ? _createUserAccount(
+                              context,
+                              emailController.text,
+                              passwordController.text,
+                              firstNameController.text,
+                              lastNameController.text)
+                          : null,
+                    ),
+                    ElevatedButton(
+                      onPressed: () => isRegister
+                          ? _createUserAccount(
+                              context,
+                              emailController.text,
+                              passwordController.text,
+                              firstNameController.text,
+                              lastNameController.text)
+                          : _signInWithEmail(context, emailController.text,
+                              passwordController.text),
+                      child: Text(isRegister ? 'Register' : 'Sign In'),
+                    ),
+                    if (!isRegister) // Only show "Forgot Password?" if in sign-in mode
+                      TextButton(
+                        onPressed: () =>
+                            _showForgotPasswordDialog(context, emailController),
+                        child: const Text("Forgot Password?"),
+                      ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Close the current sheet
+                        _showSignInOrRegisterSheet(context,
+                            isRegister: !isRegister);
+                      },
+                      child: Text(isRegister
+                          ? "Already have an account? Sign In"
+                          : "Don't have an account? Register"),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        });
+  }
+
+  Future<void> _showForgotPasswordDialog(
+      BuildContext context, TextEditingController emailController) async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Forgot Password"),
+        content: TextField(
+          controller: emailController,
+          decoration: const InputDecoration(
+            hintText: "Enter your email address",
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+              _sendPasswordResetEmail(context, emailController.text);
+            },
+            child: const Text("Send"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _sendPasswordResetEmail(
+      BuildContext context, String email) async {
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Password reset link sent to $email")));
+    } on FirebaseAuthException catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text("Failed to send password reset email: ${e.message}")));
+    }
+  }
+
+  Future<void> _signInWithEmail(
+      BuildContext context, String email, String password) async {
+    try {
+      await _auth.signInWithEmailAndPassword(email: email, password: password);
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) => const NavBar())); // Navigate to main screen
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text(
+              "Failed to sign in. Please check your email and password.")));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -163,6 +360,24 @@ class LandingPage extends StatelessWidget {
                       50), // Full-width button with fixed height
                 ),
               ),
+            const Divider(),
+            const Text('or'),
+            ElevatedButton(
+              onPressed: () => _showSignInOrRegisterSheet(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white, // Light grey color
+                foregroundColor: Colors.black, // Text color
+                minimumSize: const Size(double.infinity,
+                    50), // Full-width button with fixed height // Optional: border color
+              ),
+              child: Text(
+                'Continue with Email',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[800], // Darker text color for contrast
+                ),
+              ),
+            ),
           ],
         ),
       ),
