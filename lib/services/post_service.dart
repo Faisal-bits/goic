@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/post.dart';
 import '../models/reply.dart';
+import 'package:logging/logging.dart';
+
+final Logger logger = Logger('PostPage');
 
 class PostService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -13,7 +16,6 @@ class PostService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
-      // Use asyncMap to wait for all asynchronous operations within the stream
       List<Future<Post>> futures = snapshot.docs.map((doc) async {
         var postData = Post.fromFirestore(doc);
         try {
@@ -24,7 +26,7 @@ class PostService {
             profilePicUrl: userData.data()?['profilePicUrl'],
           );
         } catch (e) {
-          print("Error fetching user data: $e");
+          logger.warning("Error fetching user data: $e");
         }
         return postData;
       }).toList();
@@ -45,7 +47,6 @@ class PostService {
         throw Exception("Post does not exist!");
       }
 
-      // Cast the data to Map<String, dynamic> to safely use the '[]' operator.
       var postData =
           postSnapshot.data() as Map<String, dynamic>?; // Safe cast to a map
       if (postData == null) {
@@ -68,14 +69,13 @@ class PostService {
       // Increment the replies count in the original post
       transaction.update(postRef, {'repliesCount': currentRepliesCount + 1});
     }).then((result) {
-      print("Reply added and post's reply count updated successfully.");
+      logger.info("Reply added and post's reply count updated successfully.");
     }).catchError((error) {
-      print("Failed to add reply: $error");
+      logger.warning("Failed to add reply: $error");
     });
   }
 
   Stream<List<Reply>> getRepliesForPost(String postId) async* {
-    // Listen to reply snapshots
     yield* FirebaseFirestore.instance
         .collection('posts')
         .doc(postId)
@@ -90,7 +90,6 @@ class PostService {
             .doc(doc['userId'])
             .get();
 
-        // Use the enriched data to create a Reply object
         return Reply.fromDocumentSnapshot(doc,
             firstName: userData.data()?['firstName'],
             profilePicUrl: userData.data()?['profilePicUrl']);
@@ -103,7 +102,7 @@ class PostService {
   Future<void> likeReply(String postId, String replyId, bool isLiked) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
-      print("User not logged in");
+      logger.info("User not logged in");
       return;
     }
 
@@ -139,9 +138,9 @@ class PostService {
         'likedByUsers': likedByUsers,
       });
     }).then((result) {
-      print("Reply like updated successfully.");
+      logger.info("Reply like updated successfully.");
     }).catchError((error) {
-      print("Failed to update reply like: $error");
+      logger.warning("Failed to update reply like: $error");
     });
   }
 }

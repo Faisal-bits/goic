@@ -30,7 +30,7 @@ class _CommunityPageState extends State<CommunityPage> {
         'likedByUsers': [],
       }).then((docRef) => docRef.id);
 
-      print("Test post added successfully with ID: $postId");
+      logger.info("Test post added successfully with ID: $postId");
     } catch (e) {
       logger.warning(e);
     }
@@ -52,7 +52,7 @@ class _CommunityPageState extends State<CommunityPage> {
           final posts = snapshot.data!;
           return RefreshIndicator(
             onRefresh: () async {
-              // Implement your refresh logic here
+              // refresh logic here
             },
             child: ListView.builder(
               itemCount: posts.length,
@@ -63,7 +63,7 @@ class _CommunityPageState extends State<CommunityPage> {
                     leading: post.profilePicUrl != null
                         ? CircleAvatar(
                             backgroundImage: NetworkImage(post.profilePicUrl!),
-                            radius: 24, // Adjust the size as needed
+                            radius: 24,
                           )
                         : const CircleAvatar(
                             radius: 24, child: Icon(Icons.account_circle)),
@@ -83,7 +83,7 @@ class _CommunityPageState extends State<CommunityPage> {
           final result = await Navigator.of(context).push(
               MaterialPageRoute(builder: (context) => const NewPostScreen()));
           if (result == true) {
-            setState(() {}); // Optionally refresh the list of posts
+            setState(() {}); // refresh the list of posts
           }
         },
         tooltip: 'Create New Post',
@@ -93,12 +93,10 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Widget _buildTrailingIcons(Post post) {
-    final userId =
-        FirebaseAuth.instance.currentUser?.uid; // Correctly fetch user ID here
+    final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
       // Handle case when the user is not logged in
-      return SizedBox
-          .shrink(); // Return an empty widget or however you wish to handle this case
+      return const SizedBox.shrink(); // Return an empty widget
     }
 
     bool alreadyLiked = post.likedByUsers.contains(userId);
@@ -109,8 +107,7 @@ class _CommunityPageState extends State<CommunityPage> {
         IconButton(
           icon:
               Icon(alreadyLiked ? Icons.thumb_up : Icons.thumb_up_alt_outlined),
-          onPressed: () => _likePost(
-              post.postId, alreadyLiked, userId), // Pass userId to _likePost
+          onPressed: () => _likePost(post.postId, alreadyLiked, userId),
         ),
         Text('${post.likesCount}'),
         IconButton(
@@ -124,7 +121,7 @@ class _CommunityPageState extends State<CommunityPage> {
   void _likePost(String postId, bool alreadyLiked, String userId) async {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
-      print("User not logged in");
+      logger.info("User not logged in");
       return;
     }
 
@@ -138,7 +135,6 @@ class _CommunityPageState extends State<CommunityPage> {
         throw Exception("Post does not exist!");
       }
 
-      // Cast to Map<String, dynamic> to ensure containsKey can be called
       Map<String, dynamic> postData =
           postSnapshot.data() as Map<String, dynamic>? ?? {};
 
@@ -160,21 +156,20 @@ class _CommunityPageState extends State<CommunityPage> {
       transaction.update(
           postRef, {'likesCount': likesCount, 'likedByUsers': likedByUsers});
     }).then((result) {
-      print("Like updated successfully.");
+      logger.info("Like updated successfully.");
       if (mounted) setState(() {}); // Refresh UI to reflect like change
     }).catchError((error) {
-      print("Failed to update like: $error");
+      logger.warning("Failed to update like: $error");
     });
   }
 
   void _showReplies(BuildContext context, Post post) {
     final TextEditingController replyController = TextEditingController();
 
-    // Define userId at the start of the method
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) {
       // Handle the case where the user is not logged in
-      print("User not logged in");
+      logger.info("User not logged in");
       // Optionally, show a message to the user or return to prevent opening the replies view
       return;
     }
@@ -265,21 +260,22 @@ class _CommunityPageState extends State<CommunityPage> {
                         icon: const Icon(Icons.send),
                         onPressed: () async {
                           if (replyController.text.trim().isEmpty) {
-                            print("Reply field is empty");
+                            logger.info("Reply field is empty");
                             ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                     content: Text("Reply cannot be empty")));
                             return;
                           }
 
-                          print("Submitting reply: ${replyController.text}");
+                          logger.info(
+                              "Submitting reply: ${replyController.text}");
 
                           try {
                             await _postService.addReplyToPost(
                                 post.postId,
                                 userId, // Use 'userId' here, ensuring it's defined and not null
                                 replyController.text.trim());
-                            print("Reply submitted successfully");
+                            logger.info("Reply submitted successfully");
 
                             replyController
                                 .clear(); // Clear the text field after submitting
@@ -289,9 +285,10 @@ class _CommunityPageState extends State<CommunityPage> {
                             // Trigger a state change to refresh the UI, like updating the reply count
                             setState(() {});
                           } catch (e) {
-                            print("Failed to submit reply: $e");
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text("Failed to submit reply")));
+                            logger.warning("Failed to submit reply: $e");
+                            ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text("Failed to submit reply")));
                           }
                         },
                       ),
