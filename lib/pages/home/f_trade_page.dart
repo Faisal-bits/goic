@@ -7,7 +7,10 @@ import 'package:logging/logging.dart';
 final Logger logger = Logger('FTrade');
 
 class FTradePage extends StatefulWidget {
-  const FTradePage({super.key});
+  final int? year;
+  final String tradeType;
+  const FTradePage({Key? key, this.year, this.tradeType = 'Imports'})
+      : super(key: key);
 
   @override
   State<FTradePage> createState() => _FTradePageState();
@@ -17,6 +20,25 @@ class _FTradePageState extends State<FTradePage> {
   int selectedYear = DateTime.now().year;
   String selectedProduct = 'All';
   int selectedCategoryIndex = 0; // 0: Imports, 1: Exports, 2: Re-exports
+
+  @override
+  void initState() {
+    super.initState();
+    selectedYear = widget.year ?? DateTime.now().year;
+    switch (widget.tradeType.toLowerCase()) {
+      case 'export':
+        selectedCategoryIndex = 1;
+        break;
+      case 're-export':
+        selectedCategoryIndex = 2;
+        break;
+      case 'import':
+      default:
+        selectedCategoryIndex = 0;
+        break;
+    }
+  }
+
   final Map<String, double> countryDataImports = {
     'Saudi Arabia': 20,
     'UAE': 25,

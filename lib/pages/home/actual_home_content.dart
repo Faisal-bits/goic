@@ -180,34 +180,45 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
     List<Widget> buildTrendingItems() {
       return trendingData.map((item) {
         final countryName = localizations.getCountryName(item['country']);
-        // Make sure to pass the type in the correct case expected by your localization map.
         final typeDescription =
             localizations.getTypeDescription(item['type'].toLowerCase());
         final changeDescription = localizations.translateChange(item['change']);
 
         final itemDescription =
             "$countryName ${item['year']} $typeDescription, $changeDescription";
-
         final itemColor = countryColors[item['country']] ?? Colors.grey;
 
-        return Container(
-          width: MediaQuery.of(context).size.width * 0.6,
-          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-          decoration: BoxDecoration(
-            color: itemColor,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Center(
-            // Center widget added to center text vertically
-            child: Text(
-              itemDescription,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
+        return GestureDetector(
+          onTap: () {
+            // Navigate to the FTradePage when the item is tapped
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => FTradePage(
+                  year: item['year'] as int,
+                  tradeType: item['type'] as String,
+                ),
               ),
-              textAlign: TextAlign.center,
+            );
+          },
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.6,
+            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+            decoration: BoxDecoration(
+              color: itemColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Text(
+                itemDescription,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         );
