@@ -52,9 +52,11 @@ class _NewPostScreenState extends State<NewPostScreen> {
     // In _submitPost method
     try {
       await FirebaseFirestore.instance.collection('posts').add(post);
+      if (!mounted) return;
       Navigator.pop(context, true); // Signal success
     } catch (e) {
       logger.warning("Failed to add post: $e");
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Failed to add post. Please try again.')),
       );

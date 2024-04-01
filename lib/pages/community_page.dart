@@ -11,7 +11,7 @@ import 'package:logging/logging.dart';
 final Logger logger = Logger('CommunityPage');
 
 class CommunityPage extends StatefulWidget {
-  const CommunityPage({Key? key}) : super(key: key);
+  const CommunityPage({super.key});
 
   @override
   State<CommunityPage> createState() => _CommunityPageState();
@@ -279,6 +279,7 @@ class _CommunityPageState extends State<CommunityPage> {
 
                             replyController
                                 .clear(); // Clear the text field after submitting
+                            if (!mounted) return;
                             Navigator.pop(
                                 context); // Optionally close the modal
 

@@ -6,6 +6,7 @@ import '../../models/shared_history.dart';
 import 'package:intl/intl.dart';
 import '../../models/history_notifier.dart';
 import 'package:logging/logging.dart';
+import 'package:goic/services/api_service.dart';
 
 final Logger logger = Logger('GIDPage');
 
@@ -21,6 +22,17 @@ class CountryData {
     required this.investment,
     required this.noOfLabor,
   });
+
+  // Correct placement of the factory constructor
+  factory CountryData.fromApi(Map<String, dynamic> data) {
+    // Ensure correct mapping from your API data to the CountryData fields
+    return CountryData(
+      name: data['nameenglish'], // Adjust based on actual API response
+      noOfFirms: double.tryParse(data['cnttotfirms'].toString()) ?? 0.0,
+      investment: double.tryParse(data['cnttotinvusd'].toString()) ?? 0.0,
+      noOfLabor: double.tryParse(data['cnttotmpqty'].toString()) ?? 0.0,
+    );
+  }
 }
 
 List<CountryData> countryDataList = [
@@ -55,31 +67,153 @@ class _GIDPageState extends State<GIDPage> {
   late String selectedISICSector;
   late String selectedStatus;
   HistoryNotifier historyNotifier = HistoryNotifier();
+  List<dynamic> _countries = [];
+  List<dynamic> _isicCodes = [];
+  List<dynamic> _companyStatuses = [];
+  double totalFirms = 0;
+  double totalInvestment = 0;
+  double totalLabor = 0;
+  late int selectedCountryId;
+
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
     super.initState();
-    selectedYear = widget.initialConfig?.year ?? DateTime.now().year;
-    selectedISICSector = widget.initialConfig?.isic ?? '10'; // default
-    selectedStatus = widget.initialConfig?.status ?? 'All'; // default
-    filterData();
+    bool isAfterSeptember = DateTime.now().month > 9;
+    selectedYear =
+        isAfterSeptember ? DateTime.now().year : DateTime.now().year - 1;
+
+    selectedISICSector = widget.initialConfig?.isic ??
+        '10'; // You might need to adjust this based on API data
+    selectedStatus =
+        widget.initialConfig?.status ?? 'All'; // Adjust based on API data
+    selectedCountryId =
+        _countries.isNotEmpty ? _countries.first['countryid'] : 0;
+
+    // Initialize ApiService and fetch initial data
+    final ApiService apiService = ApiService();
+    Future.wait([
+      apiService.fetchCountries(),
+      apiService.fetchISICCodes(),
+      apiService.fetchCompanyStatuses(),
+    ]).then((responses) {
+      setState(() {
+        _countries = responses[0];
+        _isicCodes = responses[1];
+        _companyStatuses = responses[2];
+        // Assuming the first country in the list as the default selected country
+        selectedCountryId = _countries.isNotEmpty
+            ? int.parse(_countries.first['countryid'].toString())
+            : 0;
+      });
+    });
+    fetchSummaryData();
   }
 
-  List<DropdownMenuItem<String>> getISICSectorItems() {
-    List<Map<String, String>> isicSectors = [
-      {'code': '10', 'description': 'Manufacture of food products'},
-      // other sectors here...
-      {
-        'code': '33',
-        'description': 'Repair and installation of machinery and equipment'
-      },
-    ];
-    return isicSectors
-        .map((sector) => DropdownMenuItem<String>(
-              value: sector['code']!,
-              child: Text('${sector['code']}: ${sector['description']}'),
-            ))
-        .toList();
+  Future<void> fetchGCCSummaryData() async {
+    int gccCountryId = 10096; // GCC country ID
+
+    try {
+      // Fetch data for the selected year
+      List<dynamic> currentYearStats = await apiService.fetchGIDStats(
+          year: selectedYear,
+          countryId: gccCountryId,
+          isicCode: int.parse(selectedISICSector));
+
+      double firmsCurrentYear = 0,
+          investmentCurrentYear = 0,
+          laborCurrentYear = 0;
+      double firmsPreviousYear = 0,
+          investmentPreviousYear = 0,
+          laborPreviousYear = 0;
+
+      // Summarize current year stats
+      currentYearStats.forEach((stat) {
+        firmsCurrentYear +=
+            double.tryParse(stat['gcctotfirms'].toString()) ?? 0;
+        investmentCurrentYear +=
+            double.tryParse(stat['gcctotinvusd'].toString()) ?? 0;
+        laborCurrentYear +=
+            double.tryParse(stat['gcctotmpqty'].toString()) ?? 0;
+      });
+
+      // If not the current year, fetch and summarize previous year stats for comparison
+      if (selectedYear != DateTime.now().year) {
+        List<dynamic> previousYearStats = await apiService.fetchGIDStats(
+            year: selectedYear - 1,
+            countryId: gccCountryId,
+            isicCode: int.parse(selectedISICSector));
+
+        previousYearStats.forEach((stat) {
+          firmsPreviousYear +=
+              double.tryParse(stat['gcctotfirms'].toString()) ?? 0;
+          investmentPreviousYear +=
+              double.tryParse(stat['gcctotinvusd'].toString()) ?? 0;
+          laborPreviousYear +=
+              double.tryParse(stat['gcctotmpqty'].toString()) ?? 0;
+        });
+      }
+
+      // Calculate percentage changes
+      double firmsChange = ((firmsCurrentYear - firmsPreviousYear) /
+              (firmsPreviousYear == 0 ? 1 : firmsPreviousYear)) *
+          100;
+      double investmentChange =
+          ((investmentCurrentYear - investmentPreviousYear) /
+                  (investmentPreviousYear == 0 ? 1 : investmentPreviousYear)) *
+              100;
+      double laborChange = ((laborCurrentYear - laborPreviousYear) /
+              (laborPreviousYear == 0 ? 1 : laborPreviousYear)) *
+          100;
+
+      // Update state with fetched data and calculated changes
+      setState(() {
+        totalFirms = firmsCurrentYear;
+        totalInvestment = investmentCurrentYear;
+        totalLabor = laborCurrentYear;
+        // You might also want to store the percentage changes if you plan to display them
+      });
+    } catch (e) {
+      logger.severe("Failed to fetch GCC summary data: $e");
+    }
+  }
+
+  void fetchSummaryData() async {
+    try {
+      // Use the correct API call to fetch summary data
+      // For demonstration, I'm fetching general stats, adjust based on your actual API
+      List<dynamic> summaryStats = await apiService.fetchGIDStats(
+          year: selectedYear, countryId: selectedCountryId);
+
+      // Assuming the API response includes fields for total firms, total investment, and total labor
+      // Summarize data if needed, or directly assign if API provides summary
+      setState(() {
+        totalFirms = summaryStats.fold<double>(
+            0,
+            (sum, data) =>
+                sum + (double.tryParse(data['noOfFirms'].toString()) ?? 0.0));
+        totalInvestment = summaryStats.fold<double>(
+            0,
+            (sum, data) =>
+                sum + (double.tryParse(data['investment'].toString()) ?? 0.0));
+        totalLabor = summaryStats.fold<double>(
+            0,
+            (sum, data) =>
+                sum + (double.tryParse(data['noOfLabor'].toString()) ?? 0.0));
+      });
+    } catch (e) {
+      logger.severe("Failed to fetch summary data: $e");
+    }
+  }
+
+  List<DropdownMenuItem<String>> getCountryItems() {
+    return _countries.map<DropdownMenuItem<String>>((country) {
+      return DropdownMenuItem<String>(
+        value: country['countryid'].toString(),
+        child: Text(country['nameenglish']),
+      );
+    }).toList();
   }
 
   void _onSearchPressed() async {
@@ -98,32 +232,59 @@ class _GIDPageState extends State<GIDPage> {
     widget.onSearchDone?.call();
     await saveSearchHistory(currentHistory);
     historyNotifier.notifyListeners();
+    await fetchGCCSummaryData();
   }
 
-  void filterData() {
-    final baseData = {
-      'Saudi Arabia': [1200, 500, 300000],
-      'UAE': [900, 450, 250000],
-      'Qatar': [700, 300, 150000],
-      'Kuwait': [500, 200, 120000],
-      'Oman': [400, 150, 100000],
-      'Bahrain': [300, 100, 80000],
-    };
+  void updateSummaryAndGraphs(List<CountryData> data) {
+    // Calculate summary stats
+    // This is an example; adjust calculations as necessary
+    final totalFirms =
+        data.fold<double>(0, (sum, item) => sum + item.noOfFirms);
+    final totalInvestment =
+        data.fold<double>(0, (sum, item) => sum + item.investment);
+    final totalLabor =
+        data.fold<double>(0, (sum, item) => sum + item.noOfLabor);
 
-    // Simulate fetching data based on filters. This right now only considers the year.
-    countryDataList = List.generate(6, (index) {
-      String country = baseData.keys.elementAt(index);
-      List<int> values = baseData[country]!;
-      // multiplier or formula for simulation
-      double yearMultiplier = (selectedYear - 2020).toDouble();
-      return CountryData(
-        name: country,
-        noOfFirms: values[0] + 100.0 * yearMultiplier,
-        investment: values[1] + 50.0 * yearMultiplier,
-        noOfLabor: values[2] + 30000.0 * yearMultiplier,
-      );
+    // Update state to refresh UI with new data
+    setState(() {
+      // Assuming you have state variables to hold summary stats
+      this.totalFirms = totalFirms;
+      this.totalInvestment = totalInvestment;
+      this.totalLabor = totalLabor;
+
+      // Update graph data sources as well
+      // You might need to convert data to a format suitable for your graphing library
     });
-    setState(() {});
+  }
+
+  void filterData() async {
+    final ApiService apiService = ApiService();
+    try {
+      // Fetch filtered data for the selected filters
+      List<dynamic> stats = await apiService.fetchGIDStats(
+        year: selectedYear,
+        countryId:
+            selectedCountryId, // Assuming you've managed to fetch and set this correctly
+        isicCode: int.parse(selectedISICSector),
+      );
+
+      // Filter or process stats for GCC if needed or use directly if fetching for a specific country
+
+      // Example processing, replace with actual logic as needed
+      var processedData =
+          stats.map((stat) => CountryData.fromApi(stat)).toList();
+
+      setState(() {
+        countryDataList = processedData;
+        // Trigger any other UI updates needed based on new data
+      });
+
+      // Call additional methods here if you need to further process data for the summary or graphs
+      updateSummaryAndGraphs(processedData);
+    } catch (e) {
+      logger.severe("Failed to fetch filtered data: $e");
+      // Handle errors, maybe show a message to the user
+    }
   }
 
   @override
@@ -200,7 +361,14 @@ class _GIDPageState extends State<GIDPage> {
   }
 
   Widget _buildYearDropdown() {
-    List<int> years = List.generate(6, (index) => DateTime.now().year - index);
+    int currentYear = DateTime.now().year;
+    // Check if the current month is after September
+    bool isAfterSeptember = DateTime.now().month > 9;
+    // If it's after September, use the current year as the starting year
+    // Otherwise, use the previous year as the starting year
+    int startingYear = isAfterSeptember ? currentYear : currentYear - 1;
+
+    List<int> years = List.generate(5, (index) => startingYear - index);
     return DropdownButtonFormField<int>(
       isExpanded: true,
       value: selectedYear,
@@ -210,7 +378,7 @@ class _GIDPageState extends State<GIDPage> {
           selectedYear = value!;
         });
       },
-      items: years.map<DropdownMenuItem<int>>((int year) {
+      items: years.map<DropdownMenuItem<int>>((year) {
         return DropdownMenuItem<int>(
           value: year,
           child: Text(year.toString()),
@@ -220,15 +388,6 @@ class _GIDPageState extends State<GIDPage> {
   }
 
   Widget _buildISICDropdown() {
-    List<Map<String, dynamic>> isicSectors = [
-      {'code': '10', 'description': 'Manufacture of food products'},
-      // other sectors here ...
-      {
-        'code': '33',
-        'description': 'Repair and installation of machinery and equipment'
-      },
-    ];
-
     return DropdownButtonFormField<String>(
       isExpanded: true,
       value: selectedISICSector,
@@ -238,10 +397,10 @@ class _GIDPageState extends State<GIDPage> {
           selectedISICSector = value!;
         });
       },
-      items: isicSectors.map((sector) {
+      items: _isicCodes.map((isicCode) {
         return DropdownMenuItem<String>(
-          value: sector['code'],
-          child: Text('${sector['code']}: ${sector['description']}'),
+          value: isicCode['isiccode'].toString(),
+          child: Text('${isicCode['isiccode']}: ${isicCode['nameenglish']}'),
         );
       }).toList(),
     );
@@ -311,14 +470,8 @@ class _GIDPageState extends State<GIDPage> {
   }
 
   Widget _buildGCCSummaryCard() {
-    final totalFirms =
-        countryDataList.fold<double>(0, (sum, item) => sum + item.noOfFirms);
-    final totalInvestment =
-        countryDataList.fold<double>(0, (sum, item) => sum + item.investment);
-    final totalLabor =
-        countryDataList.fold<double>(0, (sum, item) => sum + item.noOfLabor);
-
-    // No need to convert to Int and then to String, directly pass double to _buildStatCard
+    // The method uses totalFirms, totalInvestment, and totalLabor directly
+    // These variables are updated by fetchSummaryData based on API response
     return Card(
       margin: const EdgeInsets.all(16),
       child: Padding(
@@ -400,7 +553,18 @@ class _GIDPageState extends State<GIDPage> {
     required double Function(CountryData) dataSelector,
     required Color barColor,
   }) {
+    // Check if countryDataList is empty and return an empty widget or placeholder.
+    if (countryDataList.isEmpty) {
+      // Example: return an empty chart or some placeholder
+      // Adjust this based on your UI requirements
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: const Center(child: Text('No data available')),
+      );
+    }
+
     final maxY = countryDataList.map(dataSelector).reduce(max) * 1.15;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
