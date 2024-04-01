@@ -5,11 +5,11 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:logging/logging.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'landing_page.dart';
 import '../localization.dart';
-import '../main.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../locale_provider.dart';
+import 'package:provider/provider.dart';
 
 final Logger logger = Logger('ProfilePage');
 
@@ -77,6 +77,7 @@ class _ProfilePageState extends State<ProfilePage> {
             .update({'profilePicUrl': downloadUrl});
         setState(() => _profilePicUrl = downloadUrl);
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to upload image: $e')),
         );
@@ -93,6 +94,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     // Check the status of the permissions.
     if (!storageStatus.isGranted) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Storage permission is required to pick images.')),
@@ -115,6 +117,7 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       _isEditing = false;
     });
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
           content: Text(
@@ -126,20 +129,16 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       await googleSignIn.signOut();
       await _auth.signOut();
-      Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => LandingPage()));
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LandingPage()),
+        (Route<dynamic> route) => false, // Remove all previous routes
+      );
     } catch (error) {
       logger.warning("Error signing out: $error");
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text("Error signing out: $error")));
     }
-  }
-
-  Future<void> _toggleLanguage(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    bool isArabic = prefs.getString('language_code') == 'ar';
-    await prefs.setString('language_code', isArabic ? 'en' : 'ar');
-    MyApp.of(context)?.setLocale(Locale(isArabic ? 'en' : 'ar'));
   }
 
   @override
@@ -296,11 +295,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget _buildLanguageToggleButton() {
     return ElevatedButton(
-      onPressed: () => _toggleLanguage(context),
-      style: ElevatedButton.styleFrom(
-        minimumSize:
-            const Size(200, 50), // Adjust the width and height as needed
-      ),
+      onPressed: () {
+        final provider = Provider.of<LocaleProvider>(context, listen: false);
+        // Determine the current locale
+        bool isCurrentlyArabic = provider.locale.languageCode == 'ar';
+        // Toggle between Arabic and English
+        Locale newLocale =
+            isCurrentlyArabic ? const Locale('en') : const Locale('ar');
+        provider.setLocale(newLocale);
+        // Logging for debugging purposes
+        logger.info("Toggling language to: ${newLocale.languageCode}");
+      },
       child: Text(AppLocalizations.of(context)?.language ?? 'Language / اللغة'),
     );
   }

@@ -14,7 +14,7 @@ class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
 
   @override
-  _LandingPageState createState() => _LandingPageState();
+  State<LandingPage> createState() => _LandingPageState();
 }
 
 class _LandingPageState extends State<LandingPage> {
@@ -78,12 +78,13 @@ class _LandingPageState extends State<LandingPage> {
           await UserService()
               .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
         }
-
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const NavBar()));
       }
     } catch (error) {
       logger.warning(error);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Failed to sign in with Apple. Please try again.")));
     }
@@ -122,13 +123,14 @@ class _LandingPageState extends State<LandingPage> {
             await UserService()
                 .saveUserInfoToFirestore(user.uid, firstName, lastName, email);
           }
-
+          if (!mounted) return;
           Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (context) => const NavBar()));
         }
       }
     } catch (error) {
       logger.warning(error);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text("Failed to sign in with Google. Please try again.")));
     }
@@ -148,6 +150,7 @@ class _LandingPageState extends State<LandingPage> {
             user.uid, firstName, lastName, email);
 
         // Navigate to the main screen
+        if (!mounted) return;
         Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const NavBar()));
       }
@@ -278,6 +281,7 @@ class _LandingPageState extends State<LandingPage> {
       BuildContext context, String email) async {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Password reset link sent to $email")));
     } on FirebaseAuthException catch (e) {
@@ -290,9 +294,11 @@ class _LandingPageState extends State<LandingPage> {
       BuildContext context, String email, String password) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (context) => const NavBar())); // Navigate to main screen
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text(
               "Failed to sign in. Please check your email and password.")));
