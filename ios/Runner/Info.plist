@@ -60,5 +60,14 @@
 	<string>Upload a photo for your profile picture.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Take a photo for your profile picture.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Used for displaying your country/region in the communities page</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Used for displaying your country/region in the communities page</string>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<string>An API to mobile.goic.org.qa to fetch real-time data regarding information about info pages in the home page</string>
+		<string>An API to Heroku backend which hosts Flask application to talk to OpenAI platform for ChatBot functionality</string>
+	</array>
 </dict>
 </plist>
