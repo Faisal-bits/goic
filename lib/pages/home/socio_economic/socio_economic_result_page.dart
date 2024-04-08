@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:goic/services/api_service.dart';
+import 'dart:math';
 
 class SocioEconomicResultPage extends StatefulWidget {
-  final String country;
-  final String economicIndicator;
-  final String industrialIndicator;
+  final int countryId;
+  final int? comparisonCountryId;
+  final int economicIndicatorId;
+  final bool comparisonMode;
 
   const SocioEconomicResultPage({
     Key? key,
-    required this.country,
-    required this.economicIndicator,
-    required this.industrialIndicator,
+    required this.countryId,
+    this.comparisonCountryId,
+    required this.economicIndicatorId,
+    required this.comparisonMode,
   }) : super(key: key);
 
   @override
@@ -19,163 +23,401 @@ class SocioEconomicResultPage extends StatefulWidget {
 }
 
 class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
+  List<dynamic> _economicData = [];
+  List<dynamic> _comparisonEconomicData = [];
+  Map<String, String> _countryIdToNameMap = {};
+  String _countryArea = '';
+  String _population = '';
+  String _comparisonCountryArea = '';
+  String _comparisonPopulation = '';
+
   @override
   void initState() {
     super.initState();
-    selectedEconomicIndicator = widget.economicIndicator;
-    selectedIndustrialIndicator = widget.industrialIndicator;
+    _fetchData();
   }
 
-  // Sample data for economic indicators over the past 5 years for a country
-  final Map<String, List<double>> sampleEconomicData = {
-    'GDP': [1000, 1200, 1400, 1600, 1800],
-    'Inflation': [2.5, 3.0, 1.8, 2.1, 2.3],
-    'Unemployment': [5.0, 4.8, 4.6, 4.2, 3.9],
-  };
+  Future<void> _fetchData() async {
+    ApiService apiService = ApiService();
+    List<dynamic> countries = await apiService.fetchCountries();
+    Map<String, String> countryIdToNameMap = {};
+    for (var country in countries) {
+      countryIdToNameMap[country['countryid'].toString()] =
+          country['nameenglish'];
+    }
 
-  // Sample data for industrial indicators
-  final Map<String, List<double>> sampleIndustrialData = {
-    'Manufacturing': [500, 550, 600, 650, 700],
-    'Construction': [300, 320, 340, 360, 380],
-    'Services': [800, 850, 900, 950, 1000],
-  };
+    int currentYear = DateTime.now().year - 1;
+    List<dynamic> economicData = [];
+    List<dynamic> comparisonEconomicData = [];
 
-  // Current selected indicators
-  String selectedEconomicIndicator = 'GDP';
-  String selectedIndustrialIndicator = 'Manufacturing';
+    for (int year = currentYear - 4; year <= currentYear; year++) {
+      List<dynamic> yearData = await apiService.fetchSOECData(
+        year: year,
+        countryId: widget.countryId,
+      );
+
+      List<dynamic> yearEconomicData = yearData
+          .where((data) => data['soecid'] == widget.economicIndicatorId)
+          .toList();
+
+      economicData.addAll(yearEconomicData);
+
+      if (widget.comparisonMode && widget.comparisonCountryId != null) {
+        List<dynamic> comparisonYearData = await apiService.fetchSOECData(
+          year: year,
+          countryId: widget.comparisonCountryId!,
+        );
+
+        List<dynamic> comparisonYearEconomicData = comparisonYearData
+            .where((data) => data['soecid'] == widget.economicIndicatorId)
+            .toList();
+
+        comparisonEconomicData.addAll(comparisonYearEconomicData);
+      }
+    }
+
+    String countryArea = '';
+    String population = '';
+    String comparisonCountryArea = '';
+    String comparisonPopulation = '';
+
+    try {
+      countryArea = (await apiService.fetchSOECData(
+              year: currentYear, countryId: widget.countryId))
+          .firstWhere((data) => data['soecid'] == 100,
+              orElse: () => {'value': ''})['value'];
+
+      population = (await apiService.fetchSOECData(
+              year: currentYear, countryId: widget.countryId))
+          .firstWhere((data) => data['soecid'] == 101,
+              orElse: () => {'value': ''})['value'];
+
+      if (population.isEmpty) {
+        int previousYear = currentYear - 1;
+        while (previousYear >= currentYear - 3 && population.isEmpty) {
+          population = (await apiService.fetchSOECData(
+                  year: previousYear, countryId: widget.countryId))
+              .firstWhere((data) => data['soecid'] == 101,
+                  orElse: () => {'value': ''})['value'];
+          previousYear--;
+        }
+      }
+
+      if (widget.comparisonMode && widget.comparisonCountryId != null) {
+        comparisonCountryArea = (await apiService.fetchSOECData(
+                year: currentYear, countryId: widget.comparisonCountryId!))
+            .firstWhere((data) => data['soecid'] == 100,
+                orElse: () => {'value': ''})['value'];
+
+        comparisonPopulation = (await apiService.fetchSOECData(
+                year: currentYear, countryId: widget.comparisonCountryId!))
+            .firstWhere((data) => data['soecid'] == 101,
+                orElse: () => {'value': ''})['value'];
+
+        if (comparisonPopulation.isEmpty) {
+          int previousYear = currentYear - 1;
+          while (
+              previousYear >= currentYear - 3 && comparisonPopulation.isEmpty) {
+            comparisonPopulation = (await apiService.fetchSOECData(
+                    year: previousYear, countryId: widget.comparisonCountryId!))
+                .firstWhere((data) => data['soecid'] == 101,
+                    orElse: () => {'value': ''})['value'];
+            previousYear--;
+          }
+        }
+      }
+
+      print('Country Area: $countryArea');
+      print('Population: $population');
+      print('Comparison Country Area: $comparisonCountryArea');
+      print('Comparison Population: $comparisonPopulation');
+    } catch (e) {
+      print('Error fetching country area or population: $e');
+    }
+
+    setState(() {
+      _economicData = economicData;
+      _comparisonEconomicData = comparisonEconomicData;
+      _countryIdToNameMap = countryIdToNameMap;
+      _countryArea = countryArea;
+      _population = population;
+      _comparisonCountryArea = comparisonCountryArea;
+      _comparisonPopulation = comparisonPopulation;
+    });
+  }
+
+  String formatPopulation(String population) {
+    if (population.isEmpty) return '';
+
+    double value = double.parse(population) * 1000;
+
+    if (value >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(1)}M';
+    } else if (value >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}K';
+    } else {
+      return value.toStringAsFixed(1);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    String countryName = _countryIdToNameMap[widget.countryId.toString()] ?? '';
+    String comparisonCountryName =
+        _countryIdToNameMap[widget.comparisonCountryId?.toString() ?? ''] ?? '';
+
     return Scaffold(
-      appBar:
-          AppBar(title: Text('${widget.country} - Socio-Economic Analysis')),
+      appBar: AppBar(
+        title: Text('$countryName - Socio-Economic Analysis'),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            _buildIndicatorDropdown(
-              'Economic Indicator',
-              sampleEconomicData.keys.toList(),
-              selectedEconomicIndicator,
-              (newValue) {
-                if (newValue != null) {
-                  // Check if newValue is not null
-                  setState(() {
-                    selectedEconomicIndicator =
-                        newValue; // Safely assign the non-null newValue to the state variable
-                  });
-                }
-              },
+            if (widget.comparisonMode) ...[
+              _buildInfoCard(countryName, _countryArea, _population),
+              _buildInfoCard(comparisonCountryName, _comparisonCountryArea,
+                  _comparisonPopulation),
+            ] else
+              _buildInfoCard(countryName, _countryArea, _population),
+            const SizedBox(height: 16),
+            _buildBarChart(
+              title: 'Economic Indicator',
+              data: _economicData,
+              comparisonData: _comparisonEconomicData,
+              comparisonMode: widget.comparisonMode,
+              countryName: countryName,
+              comparisonCountryName: comparisonCountryName,
             ),
-            _buildBarChart(sampleEconomicData[selectedEconomicIndicator]!),
-            _buildIndicatorDropdown(
-              'Industrial Indicator',
-              sampleIndustrialData.keys.toList(),
-              selectedIndustrialIndicator,
-              (newValue) {
-                if (newValue != null) {
-                  // Check if newValue is not null
-                  setState(() {
-                    selectedIndustrialIndicator =
-                        newValue; // Safely assign the non-null newValue to the state variable
-                  });
-                }
-              },
-            ),
-            _buildBarChart(sampleIndustrialData[selectedIndustrialIndicator]!),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildIndicatorDropdown(String title, List<String> options,
-      String selectedValue, ValueChanged<String?> onChanged) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title,
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          DropdownButton<String>(
-            value: selectedValue,
-            onChanged: (newValue) {
-              // Since newValue is nullable, we need to check for null.
-              // If newValue is not null, then we can safely pass it to the callback.
-              if (newValue != null) {
-                onChanged(newValue);
-              }
-            },
-            items: options.map<DropdownMenuItem<String>>((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-          ),
-        ],
+  Widget _buildInfoCard(
+      String countryName, String countryArea, String population) {
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.all(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$countryName',
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Country Area: $countryArea km²',
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Population: ${formatPopulation(population)}',
+              style: const TextStyle(fontSize: 16),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBarChart(List<double> data) {
+  Widget _buildBarChart({
+    required String title,
+    required List<dynamic> data,
+    required List<dynamic> comparisonData,
+    required bool comparisonMode,
+    required String countryName,
+    required String comparisonCountryName,
+  }) {
+    if (data.isEmpty) {
+      return const Center(
+        child: Text('No data available'),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: SizedBox(
-        height: 300,
-        child: BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: data.reduce(
-                    (value, element) => value > element ? value : element) *
-                1.2,
-            titlesData: FlTitlesData(
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (double value, TitleMeta meta) {
-                    final year = DateTime.now().year - 4 + value.toInt();
-                    return Text(year.toString(),
-                        style: const TextStyle(
-                            color: Colors.black, fontWeight: FontWeight.bold));
-                  },
-                  reservedSize: 32,
-                ),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true, // Enable the Y-axis labels on the left
-                  getTitlesWidget: (value, meta) {
-                    // This function determines the widget to display for each Y-axis title
-                    return Text('${value.toInt()}',
-                        style:
-                            const TextStyle(color: Colors.black, fontSize: 10));
-                  },
-                  reservedSize: 40, // this value adjust to change labels
-                ),
-              ),
-              rightTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              topTitles:
-                  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
-            borderData: FlBorderData(show: false),
-            gridData: const FlGridData(
-                show: false), // Setting this to false removes grid lines
-            barGroups: List.generate(data.length, (index) {
-              return BarChartGroupData(
-                x: index,
-                barRods: [
-                  BarChartRodData(
-                    toY: data[index],
-                    color: Colors.blue,
-                  ),
-                ],
-              );
-            }),
           ),
-        ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 300,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: max(
+                        data.fold<double>(
+                            0,
+                            (maxValue, data) =>
+                                maxValue > double.parse(data['value'])
+                                    ? maxValue
+                                    : double.parse(data['value'])),
+                        comparisonData.fold<double>(
+                            0,
+                            (maxValue, data) =>
+                                maxValue > double.parse(data['value'])
+                                    ? maxValue
+                                    : double.parse(data['value']))) *
+                    1.2,
+                titlesData: FlTitlesData(
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (double value, TitleMeta meta) {
+                        final year = DateTime.now().year - 5 + value.toInt();
+                        return SideTitleWidget(
+                          axisSide: meta.axisSide,
+                          space: 8,
+                          child: Text(
+                            year.toString(),
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        );
+                      },
+                      reservedSize: 32,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        double adjustedValue = value * 1000000;
+                        String formattedValue;
+
+                        if (adjustedValue >= 1000000000) {
+                          formattedValue =
+                              '${(adjustedValue / 1000000000).toStringAsFixed(1)}B';
+                        } else if (adjustedValue >= 1000000) {
+                          formattedValue =
+                              '${(adjustedValue / 1000000).toStringAsFixed(1)}M';
+                        } else if (adjustedValue >= 1000) {
+                          formattedValue =
+                              '${(adjustedValue / 1000).toStringAsFixed(1)}K';
+                        } else {
+                          formattedValue = adjustedValue.toStringAsFixed(1);
+                        }
+
+                        return Text(
+                          formattedValue,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 10,
+                          ),
+                        );
+                      },
+                      reservedSize: 40,
+                    ),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                gridData: const FlGridData(show: false),
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    tooltipBgColor: Colors.blueGrey.withOpacity(0.8),
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      String tooltipValue;
+                      double adjustedValue = rod.toY * 1000000;
+
+                      if (adjustedValue >= 1000000000) {
+                        tooltipValue =
+                            '${(adjustedValue / 1000000000).toStringAsFixed(1)}B';
+                      } else if (adjustedValue >= 1000000) {
+                        tooltipValue =
+                            '${(adjustedValue / 1000000).toStringAsFixed(1)}M';
+                      } else if (adjustedValue >= 1000) {
+                        tooltipValue =
+                            '${(adjustedValue / 1000).toStringAsFixed(1)}K';
+                      } else {
+                        tooltipValue = adjustedValue.toStringAsFixed(1);
+                      }
+
+                      return BarTooltipItem(
+                        tooltipValue,
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                barGroups: comparisonMode
+                    ? List.generate(data.length, (index) {
+                        return BarChartGroupData(
+                          x: data[index]['year'] - (DateTime.now().year - 5),
+                          barRods: [
+                            BarChartRodData(
+                              toY: double.parse(data[index]['value']),
+                              color: Colors.blue,
+                            ),
+                            if (index < comparisonData.length)
+                              BarChartRodData(
+                                toY: double.parse(
+                                    comparisonData[index]['value']),
+                                color: Colors.green,
+                              ),
+                          ],
+                          barsSpace: 4,
+                        );
+                      })
+                    : List.generate(data.length, (index) {
+                        return BarChartGroupData(
+                          x: data[index]['year'] - (DateTime.now().year - 5),
+                          barRods: [
+                            BarChartRodData(
+                              toY: double.parse(data[index]['value']),
+                              color: Colors.blue,
+                            ),
+                          ],
+                        );
+                      }),
+              ),
+            ),
+          ),
+          if (comparisonMode) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  color: Colors.blue,
+                ),
+                const SizedBox(width: 4),
+                Text(countryName),
+                const SizedBox(width: 16),
+                Container(
+                  width: 12,
+                  height: 12,
+                  color: Colors.green,
+                ),
+                const SizedBox(width: 4),
+                Text(comparisonCountryName),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }

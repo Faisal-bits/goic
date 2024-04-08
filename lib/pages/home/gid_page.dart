@@ -87,37 +87,40 @@ class _GIDPageState extends State<GIDPage> {
     selectedYear =
         isAfterSeptember ? DateTime.now().year : DateTime.now().year - 1;
 
-    selectedISICSector = widget.initialConfig?.isic ??
-        '10'; // You might need to adjust this based on API data
+    selectedISICSector =
+        widget.initialConfig?.isic ?? '10'; // adjust this based on API data
     selectedStatus =
         widget.initialConfig?.status ?? 'All'; // Adjust based on API data
     selectedCountryId =
         _countries.isNotEmpty ? _countries.first['countryid'] : 0;
 
-    // Initialize ApiService and fetch initial data
-    final ApiService apiService = ApiService();
-    Future.wait([
+    initializePageData();
+  }
+
+  Future<void> initializePageData() async {
+    // Fetch necessary initial data such as countries, ISIC codes, etc.
+    await Future.wait([
       apiService.fetchCountries(),
       apiService.fetchISICCodes(),
       apiService.fetchCompanyStatuses(),
     ]).then((responses) {
+      if (!mounted) return; // Ensure the widget is still mounted
       setState(() {
         _countries = responses[0];
         _isicCodes = responses[1];
         _companyStatuses = responses[2];
-        // Assuming the first country in the list as the default selected country
         selectedCountryId = _countries.isNotEmpty
             ? int.parse(_countries.first['countryid'].toString())
             : 0;
       });
     });
-    initializeData();
-  }
 
-  Future<void> initializeData() async {
+    // Build the country ID to name map
     await buildCountryIdToNameMap();
-    fetchSummaryData();
-    await fetchSummaryDataForCountries();
+
+    // Fetch and display the default data
+    await fetchGCCSummaryData(); // This should populate the GCC stats card
+    await fetchSummaryDataForCountries(); // Fetch detailed data for each country based on default filters
   }
 
   Future<void> buildCountryIdToNameMap() async {
@@ -133,6 +136,13 @@ class _GIDPageState extends State<GIDPage> {
 
   Future<void> fetchGCCSummaryData() async {
     int gccCountryId = 10096; // GCC country ID
+    List<int> filteredStatusIds = [];
+    if (selectedStatus == 'Licensed') {
+      filteredStatusIds.add(4); // Assuming 4 is the ID for Licensed
+    } else if (selectedStatus == 'Operational') {
+      filteredStatusIds.add(5); // Assuming 5 is the ID for Operational
+    }
+    // No need to add anything if "All" is selected, as we want to include all statuses.
 
     try {
       // Fetch data for the selected year
@@ -144,55 +154,29 @@ class _GIDPageState extends State<GIDPage> {
       double firmsCurrentYear = 0,
           investmentCurrentYear = 0,
           laborCurrentYear = 0;
-      double firmsPreviousYear = 0,
-          investmentPreviousYear = 0,
-          laborPreviousYear = 0;
 
-      // Summarize current year stats
+      // Filter and summarize current year stats based on status
       currentYearStats.forEach((stat) {
-        firmsCurrentYear +=
-            double.tryParse(stat['gcctotfirms'].toString()) ?? 0;
-        investmentCurrentYear +=
-            double.tryParse(stat['gcctotinvusd'].toString()) ?? 0;
-        laborCurrentYear +=
-            double.tryParse(stat['gcctotmpqty'].toString()) ?? 0;
+        int statusId = stat['companystatusid'];
+        if (filteredStatusIds.isEmpty || filteredStatusIds.contains(statusId)) {
+          firmsCurrentYear +=
+              double.tryParse(stat['gcctotfirms'].toString()) ?? 0;
+          investmentCurrentYear +=
+              double.tryParse(stat['gcctotinvusd'].toString()) ?? 0;
+          laborCurrentYear +=
+              double.tryParse(stat['gcctotmpqty'].toString()) ?? 0;
+        }
       });
 
       // If not the current year, fetch and summarize previous year stats for comparison
-      if (selectedYear != DateTime.now().year) {
-        List<dynamic> previousYearStats = await apiService.fetchGIDStats(
-            year: selectedYear - 1,
-            countryId: gccCountryId,
-            isicCode: int.parse(selectedISICSector));
+      // Note: You might want to apply similar filtering logic for the previous year stats
 
-        previousYearStats.forEach((stat) {
-          firmsPreviousYear +=
-              double.tryParse(stat['gcctotfirms'].toString()) ?? 0;
-          investmentPreviousYear +=
-              double.tryParse(stat['gcctotinvusd'].toString()) ?? 0;
-          laborPreviousYear +=
-              double.tryParse(stat['gcctotmpqty'].toString()) ?? 0;
-        });
-      }
-
-      // Calculate percentage changes
-      double firmsChange = ((firmsCurrentYear - firmsPreviousYear) /
-              (firmsPreviousYear == 0 ? 1 : firmsPreviousYear)) *
-          100;
-      double investmentChange =
-          ((investmentCurrentYear - investmentPreviousYear) /
-                  (investmentPreviousYear == 0 ? 1 : investmentPreviousYear)) *
-              100;
-      double laborChange = ((laborCurrentYear - laborPreviousYear) /
-              (laborPreviousYear == 0 ? 1 : laborPreviousYear)) *
-          100;
-
-      // Update state with fetched data and calculated changes
+      // Update state with fetched data
       setState(() {
         totalFirms = firmsCurrentYear;
         totalInvestment = investmentCurrentYear;
         totalLabor = laborCurrentYear;
-        // You might also want to store the percentage changes if you plan to display them
+        // If you have variables for percentage changes, update them here as needed
       });
     } catch (e) {
       logger.severe("Failed to fetch GCC summary data: $e");
@@ -201,13 +185,9 @@ class _GIDPageState extends State<GIDPage> {
 
   void fetchSummaryData() async {
     try {
-      // Use the correct API call to fetch summary data
-      // For demonstration, I'm fetching general stats, adjust based on your actual API
       List<dynamic> summaryStats = await apiService.fetchGIDStats(
           year: selectedYear, countryId: selectedCountryId);
 
-      // Assuming the API response includes fields for total firms, total investment, and total labor
-      // Summarize data if needed, or directly assign if API provides summary
       setState(() {
         totalFirms = summaryStats.fold<double>(
             0,
@@ -258,7 +238,6 @@ class _GIDPageState extends State<GIDPage> {
 
   void updateSummaryAndGraphs(List<CountryData> data) {
     // Calculate summary stats
-    // This is an example; adjust calculations as necessary
     final totalFirms =
         data.fold<double>(0, (sum, item) => sum + item.noOfFirms);
     final totalInvestment =
@@ -268,13 +247,10 @@ class _GIDPageState extends State<GIDPage> {
 
     // Update state to refresh UI with new data
     setState(() {
-      // Assuming you have state variables to hold summary stats
+      // Assuming variables to hold summary stats
       this.totalFirms = totalFirms;
       this.totalInvestment = totalInvestment;
       this.totalLabor = totalLabor;
-
-      // Update graph data sources as well
-      // You might need to convert data to a format suitable for your graphing library
     });
   }
 
@@ -284,14 +260,10 @@ class _GIDPageState extends State<GIDPage> {
       // Fetch filtered data for the selected filters
       List<dynamic> stats = await apiService.fetchGIDStats(
         year: selectedYear,
-        countryId:
-            selectedCountryId, // Assuming you've managed to fetch and set this correctly
+        countryId: selectedCountryId,
         isicCode: int.parse(selectedISICSector),
       );
 
-      // Filter or process stats for GCC if needed or use directly if fetching for a specific country
-
-      // Example processing, replace with actual logic as needed
       var processedData = stats
           .map((stat) => CountryData.fromApi(stat, countryIdToNameMap))
           .toList();
@@ -458,18 +430,24 @@ class _GIDPageState extends State<GIDPage> {
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(title,
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            Text(formattedValue,
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            Text(
+              formattedValue,
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
-            Text(percentage,
-                style:
-                    TextStyle(color: isPositive ? Colors.green : Colors.red)),
+            Text(
+              percentage,
+              style: TextStyle(color: isPositive ? Colors.green : Colors.red),
+            ),
           ],
         ),
       ),
@@ -479,8 +457,12 @@ class _GIDPageState extends State<GIDPage> {
   String _formatNumber(double value) {
     if (value >= 1000 && value < 1000000) {
       return '${(value / 1000).toStringAsFixed(1)}K';
-    } else if (value >= 1000000) {
+    } else if (value >= 1000000 && value < 1000000000) {
+      // For values in millions, show with one decimal point for precision
       return '${(value / 1000000).toStringAsFixed(1)}M';
+    } else if (value >= 1000000000) {
+      // For values in billions, show with one decimal point for precision
+      return '${(value / 1000000000).toStringAsFixed(1)}B';
     }
     return value.toStringAsFixed(0);
   }
@@ -505,7 +487,7 @@ class _GIDPageState extends State<GIDPage> {
                 child: _buildStatCard("No. of Firms", totalFirms,
                     formatPercentage(totalFirms, totalFirms), true)),
             Expanded(
-                child: _buildStatCard("Investment (USD MILL)", totalInvestment,
+                child: _buildStatCard("Investment (USD)", totalInvestment,
                     formatPercentage(totalInvestment, totalInvestment), true)),
             Expanded(
                 child: _buildStatCard("No. of Labor", totalLabor,
@@ -574,6 +556,16 @@ class _GIDPageState extends State<GIDPage> {
     ];
     Map<String, CountryData> fetchedDataMap = {};
 
+    List<int> filteredStatusIds = [];
+    if (selectedStatus == 'Licensed') {
+      filteredStatusIds.add(4); // Assuming 4 is the ID for Licensed
+    } else if (selectedStatus == 'Operational') {
+      filteredStatusIds.add(5); // Assuming 5 is the ID for Operational
+    } else {
+      // If "All" is selected, include both
+      filteredStatusIds.addAll([4, 5]);
+    }
+
     for (int countryId in countryIds) {
       try {
         List<dynamic> summaryStats = await apiService.fetchGIDStats(
@@ -584,8 +576,10 @@ class _GIDPageState extends State<GIDPage> {
 
         // Process each entry in the summary stats
         summaryStats.forEach((data) {
+          int statusId = data['companystatusid'];
           String countryName = countryNames[data['countryid']] ?? 'Unknown';
-          if (!fetchedDataMap.containsKey(countryName)) {
+          if (filteredStatusIds.isEmpty ||
+              filteredStatusIds.contains(statusId)) {
             fetchedDataMap[countryName] =
                 CountryData.fromApi(data, countryIdToNameMap);
           } else {
@@ -621,9 +615,12 @@ class _GIDPageState extends State<GIDPage> {
     } else if (value >= 10000 && value < 1000000) {
       // For values 10K and above, show without decimal points until it reaches a million
       return '${(value / 1000).toStringAsFixed(0)}K';
-    } else if (value >= 1000000) {
+    } else if (value >= 1000000 && value < 1000000000) {
       // For values in millions, show with one decimal point for precision
       return '${(value / 1000000).toStringAsFixed(1)}M';
+    } else if (value >= 1000000000) {
+      // For values in billions, show with one decimal point for precision
+      return '${(value / 1000000000).toStringAsFixed(1)}B';
     }
     return value.toStringAsFixed(0);
   }
@@ -692,13 +689,23 @@ class _GIDPageState extends State<GIDPage> {
                       getTitlesWidget: (value, meta) {
                         final index = value.toInt();
                         if (index >= 0 && index < countryDataList.length) {
-                          final countryName = countryDataList[index].name;
-                          return Text(countryName,
-                              style: const TextStyle(
-                                  color: Colors.black, fontSize: 10));
+                          String countryName = countryDataList[index].name;
+                          // Check for specific country names and replace them with abbreviations
+                          if (countryName == "SAUDI ARABIA") {
+                            countryName = "KSA";
+                          } else if (countryName == "UNITED ARAB EMIRATES") {
+                            countryName = "UAE";
+                          }
+                          return Text(
+                            countryName,
+                            style: const TextStyle(
+                                color: Colors.black, fontSize: 10),
+                            textAlign: TextAlign.center,
+                          );
                         }
                         return const Text('');
                       },
+
                       reservedSize:
                           40, // Adjust based on the size of the labels
                     ),

@@ -144,25 +144,25 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
       'country': 'Qatar',
       'year': 2023,
       'type': 'Export',
-      'change': '23% up from 2022'
+      'change': '26% down from 2022'
     },
     {
       'country': 'Saudi',
       'year': 2022,
       'type': 'Import',
-      'change': '15% down from 2021'
+      'change': '24% down from 2021'
     },
     {
       'country': 'UAE',
       'year': 2021,
       'type': 'Re-Export',
-      'change': '10% up from 2020'
+      'change': '27% up from 2020'
     },
     {
       'country': 'Bahrain',
       'year': 2020,
       'type': 'Export',
-      'change': '5% up from 2019'
+      'change': '34% down from 2019'
     },
   ];
 
@@ -196,7 +196,6 @@ class _ActualHomeContentState extends State<ActualHomeContent> {
               MaterialPageRoute(
                 builder: (context) => FTradePage(
                   year: item['year'] as int,
-                  tradeType: item['type'] as String,
                 ),
               ),
             );

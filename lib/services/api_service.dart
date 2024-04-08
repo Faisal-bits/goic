@@ -45,12 +45,46 @@ class ApiService {
     if (isicCode != null) {
       url += '&isiccode__isiccode=$isicCode';
     }
-
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to load GID stats');
+    }
+  }
+
+  Future<List<dynamic>> fetchSOECIndicators() async {
+    final response =
+        await http.get(Uri.parse('$_baseUrl/soecindicators/?format=json'));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load SOEC indicators');
+    }
+  }
+
+  Future<List<dynamic>> fetchSOECData(
+      {required int year, required int countryId}) async {
+    String url =
+        '$_baseUrl/soecdata/?format=json&year=$year&countryid=$countryId';
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load SOEC data');
+    }
+  }
+
+  Future<List<dynamic>> fetchFTradeData(
+      {required int year, required int countryId}) async {
+    String url =
+        '$_baseUrl/ftrade/?format=json&year=$year&countryid=$countryId';
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load FTrade data');
     }
   }
 }

@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
 import 'home/gid_page.dart';
+import 'home/f_trade_page.dart';
+import 'home/socio_economic/socio_economic_result_page.dart';
 import '/models/search_config.dart';
 import '/models/shared_history.dart';
 import '/models/history_notifier.dart';
 import 'package:goic/localization.dart';
+import 'package:goic/services/api_service.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -16,15 +19,21 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   late Future<List<SearchConfig>> _searchHistoryFuture;
+  late Future<List<FTradeSearchConfig>> _fTradeSearchHistoryFuture;
+  late Future<List<SOESearchConfig>> _soeSearchHistoryFuture;
+  Map<int, String> _countryIdToNameMap = {};
+  Map<int, String> _economicIndicatorIdToNameMap = {};
 
-  String determineDatabaseType(SearchConfig config) {
+  String determineDatabaseType(dynamic config) {
     final localizations = AppLocalizations.of(context);
-    if (config.isic?.isNotEmpty ?? false) {
+    if (config is SearchConfig) {
       return localizations?.gid ?? "GID";
-    } else if (config.country?.isNotEmpty ?? false) {
-      return localizations?.socioEconomic ?? "Socio Economic";
-    } else {
+    } else if (config is FTradeSearchConfig) {
       return localizations?.fTrade ?? "F Trade";
+    } else if (config is SOESearchConfig) {
+      return "SOE";
+    } else {
+      return "Unknown";
     }
   }
 
@@ -33,6 +42,24 @@ class _HistoryPageState extends State<HistoryPage> {
     super.initState();
     refreshHistory();
     HistoryNotifier().addListener(refreshHistory);
+    _fetchCountryAndEconomicIndicatorMaps();
+  }
+
+  Future<void> _fetchCountryAndEconomicIndicatorMaps() async {
+    ApiService apiService = ApiService();
+    List<dynamic> countries = await apiService.fetchCountries();
+    List<dynamic> economicIndicators = await apiService.fetchSOECIndicators();
+
+    setState(() {
+      _countryIdToNameMap = {
+        for (var country in countries)
+          country['countryid']: country['nameenglish']
+      };
+      _economicIndicatorIdToNameMap = {
+        for (var indicator in economicIndicators)
+          indicator['soecid']: indicator['nameenglish']
+      };
+    });
   }
 
   @override
@@ -44,15 +71,22 @@ class _HistoryPageState extends State<HistoryPage> {
   void refreshHistory() {
     setState(() {
       _searchHistoryFuture = loadSearchHistory();
+      _fTradeSearchHistoryFuture = loadFTradeSearchHistory();
+      _soeSearchHistoryFuture = loadSOESearchHistory();
     });
   }
 
-  void _deleteSearchConfig(SearchConfig config) async {
-    await deleteSearchFromHistory(config);
-    refreshHistory();
+  void _deleteSearchConfig(dynamic config) async {
+    if (config is SearchConfig) {
+      await deleteSearchFromHistory(config);
+    } else if (config is FTradeSearchConfig) {
+      await deleteFTradeSearchFromHistory(config);
+    } else if (config is SOESearchConfig) {
+      await deleteSOESearchFromHistory(config);
+    }
   }
 
-  Widget _buildHistoryItem(SearchConfig config, int index) {
+  Widget _buildHistoryItem(dynamic config, int index) {
     final localizations = AppLocalizations.of(context);
     String databaseType = determineDatabaseType(config);
 
@@ -80,23 +114,82 @@ class _HistoryPageState extends State<HistoryPage> {
           contentPadding:
               const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           leading: const Icon(Icons.history, size: 28),
-          title: Text(
-              'Year: ${config.year}, ISIC: ${config.isic}, Status: ${config.status}',
-              style: const TextStyle(fontSize: 16)),
-          subtitle: Text(databaseType,
-              style: TextStyle(color: Theme.of(context).primaryColor)),
-          onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => GIDPage(initialConfig: config))),
+          title: config is SearchConfig
+              ? Text(
+                  'Year: ${config.year}, ISIC: ${config.isic}, Status: ${config.status}',
+                  style: const TextStyle(fontSize: 16),
+                )
+              : config is FTradeSearchConfig
+                  ? Text(
+                      'Year: ${config.year}, Trade Type: ${config.tradeType}',
+                      style: const TextStyle(fontSize: 16),
+                    )
+                  : config is SOESearchConfig
+                      ? Text(
+                          'Country: ${_countryIdToNameMap[config.countryId] ?? 'Unknown'}, '
+                          'Economic Indicator: ${_economicIndicatorIdToNameMap[config.economicIndicatorId] ?? 'Unknown'}, '
+                          'Comparison Mode: ${config.comparisonMode ? "On" : "Off"}, '
+                          'Comparison Country: ${config.comparisonMode ? (_countryIdToNameMap[config.comparisonCountryId] ?? 'Unknown') : 'N/A'}',
+                          style: const TextStyle(fontSize: 16),
+                        )
+                      : const SizedBox(),
+          subtitle: Text(
+            databaseType,
+            style: TextStyle(color: Theme.of(context).primaryColor),
+          ),
+          onTap: () {
+            if (config is SearchConfig) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => GIDPage(initialConfig: config)),
+              );
+            } else if (config is FTradeSearchConfig) {
+              int initialCategoryIndex;
+              switch (config.tradeType) {
+                case 'Imports':
+                  initialCategoryIndex = 0;
+                  break;
+                case 'Exports':
+                  initialCategoryIndex = 1;
+                  break;
+                case 'Re-exports':
+                  initialCategoryIndex = 2;
+                  break;
+                default:
+                  initialCategoryIndex = 0;
+              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FTradePage(
+                    year: config.year,
+                    initialCategoryIndex: initialCategoryIndex,
+                  ),
+                ),
+              );
+            } else if (config is SOESearchConfig) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => SocioEconomicResultPage(
+                    countryId: config.countryId,
+                    comparisonCountryId: config.comparisonCountryId,
+                    economicIndicatorId: config.economicIndicatorId,
+                    comparisonMode: config.comparisonMode,
+                  ),
+                ),
+              );
+            }
+          },
         ),
       ),
     );
   }
 
-  Widget _buildGroupedSearches(List<SearchConfig> searchHistory) {
+  Widget _buildGroupedSearches(List<dynamic> searchHistory) {
     final localizations = AppLocalizations.of(context);
-    Map<String, List<SearchConfig>> groupedByDate = {};
+    Map<String, List<dynamic>> groupedByDate = {};
 
     for (var config in searchHistory) {
       String formattedDate =
@@ -137,29 +230,43 @@ class _HistoryPageState extends State<HistoryPage> {
   }
 
   Future<void> clearAllSearchHistory() async {
-    // This assumes saveSearchHistory() expects a List<SearchConfig> and
-    // overwrites the existing history with the provided list.
-    await saveSearchHistory([]); // Pass an empty list to clear all history.
-    refreshHistory(); // Refresh the UI to reflect the deletion.
+    await saveSearchHistory([]);
+    await saveFTradeSearchHistory([]);
+    await saveSOESearchHistory([]);
+    refreshHistory();
   }
 
   Future<void> deleteTodaysSearches() async {
-    List<SearchConfig> history = await loadSearchHistory();
+    List<SearchConfig> searchHistory = await loadSearchHistory();
+    List<FTradeSearchConfig> fTradeSearchHistory =
+        await loadFTradeSearchHistory();
+    List<SOESearchConfig> soeSearchHistory = await loadSOESearchHistory();
     String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
-    List<SearchConfig> filteredHistory = history
+    List<SearchConfig> filteredSearchHistory = searchHistory
         .where((item) =>
             DateFormat('yyyy-MM-dd').format(DateTime.parse(item.date)) != today)
         .toList();
-    await saveSearchHistory(filteredHistory);
+    List<FTradeSearchConfig> filteredFTradeSearchHistory = fTradeSearchHistory
+        .where((item) =>
+            DateFormat('yyyy-MM-dd').format(DateTime.parse(item.date)) != today)
+        .toList();
+    List<SOESearchConfig> filteredSOESearchHistory = soeSearchHistory
+        .where((item) =>
+            DateFormat('yyyy-MM-dd').format(DateTime.parse(item.date)) != today)
+        .toList();
+    await saveSearchHistory(filteredSearchHistory);
+    await saveFTradeSearchHistory(filteredFTradeSearchHistory);
+    await saveSOESearchHistory(filteredSOESearchHistory);
+    refreshHistory();
   }
 
   void _deleteAllRecords() async {
-    await clearAllSearchHistory(); // This should now clear all history.
-    refreshHistory(); // Refresh to show the updated state.
+    await clearAllSearchHistory();
+    refreshHistory();
   }
 
   void _deleteTodaysRecords() async {
-    await deleteTodaysSearches(); // This should clear today's history
+    await deleteTodaysSearches();
     refreshHistory();
   }
 
@@ -183,8 +290,12 @@ class _HistoryPageState extends State<HistoryPage> {
           ),
         ],
       ),
-      body: FutureBuilder<List<SearchConfig>>(
-        future: _searchHistoryFuture,
+      body: FutureBuilder<List<dynamic>>(
+        future: Future.wait([
+          _searchHistoryFuture,
+          _fTradeSearchHistoryFuture,
+          _soeSearchHistoryFuture,
+        ]).then((results) => [...results[0], ...results[1], ...results[2]]),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());

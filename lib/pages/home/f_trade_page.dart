@@ -3,13 +3,19 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:math';
 import 'package:logging/logging.dart';
+import 'package:goic/services/api_service.dart';
+import 'package:goic/models/search_config.dart';
+import '../../models/history_notifier.dart';
+import 'package:intl/intl.dart';
+import 'package:goic/models/shared_history.dart';
 
 final Logger logger = Logger('FTrade');
 
 class FTradePage extends StatefulWidget {
   final int? year;
-  final String tradeType;
-  const FTradePage({Key? key, this.year, this.tradeType = 'Imports'})
+  final int initialCategoryIndex;
+
+  const FTradePage({Key? key, this.year, this.initialCategoryIndex = 0})
       : super(key: key);
 
   @override
@@ -17,58 +23,119 @@ class FTradePage extends StatefulWidget {
 }
 
 class _FTradePageState extends State<FTradePage> {
-  int selectedYear = DateTime.now().year;
+  int selectedYear = DateTime.now().year - 1;
   String selectedProduct = 'All';
   int selectedCategoryIndex = 0; // 0: Imports, 1: Exports, 2: Re-exports
+  String? selectedCountry;
+
+  Map<String, double> countryDataImports = {};
+  Map<String, double> countryDataExports = {};
+  Map<String, double> countryDataReExports = {};
+
+  ApiService apiService = ApiService();
 
   @override
   void initState() {
     super.initState();
-    selectedYear = widget.year ?? DateTime.now().year;
-    switch (widget.tradeType.toLowerCase()) {
-      case 'export':
-        selectedCategoryIndex = 1;
-        break;
-      case 're-export':
-        selectedCategoryIndex = 2;
-        break;
-      case 'import':
-      default:
-        selectedCategoryIndex = 0;
-        break;
+    int currentYear = DateTime.now().year;
+    selectedYear = widget.year ?? (currentYear - 1);
+    selectedCategoryIndex = widget.initialCategoryIndex;
+
+    // Ensure selectedYear is within the valid range
+    if (selectedYear > currentYear - 1) {
+      selectedYear = currentYear - 1;
+    } else if (selectedYear < currentYear - 5) {
+      selectedYear = currentYear - 5;
+    }
+
+    fetchFTradeData();
+  }
+
+  Map<String, double> fullDataImports = {};
+  Map<String, double> fullDataExports = {};
+  Map<String, double> fullDataReExports = {};
+
+  Future<void> fetchFTradeData() async {
+    try {
+      List<dynamic> countries = await apiService.fetchCountries();
+
+      for (var country in countries) {
+        int countryId = country['countryid'];
+        String countryName = country['nameenglish'];
+
+        // Exclude the country with ID 10096 (GCC)
+        if (countryId == 10096) {
+          continue;
+        }
+
+        List<dynamic> fTradeData = await apiService.fetchFTradeData(
+          year: selectedYear,
+          countryId: countryId,
+        );
+
+        if (fTradeData.isNotEmpty) {
+          var data = fTradeData.first;
+          setState(() {
+            fullDataImports[countryName] = double.parse(data['cntimportusd']);
+            fullDataExports[countryName] = double.parse(data['cntexportusd']);
+            fullDataReExports[countryName] =
+                double.parse(data['cntreexportusd']);
+
+            countryDataImports[countryName] =
+                double.parse(data['cntimportusd']);
+            countryDataExports[countryName] =
+                double.parse(data['cntexportusd']);
+            countryDataReExports[countryName] =
+                double.parse(data['cntreexportusd']);
+          });
+        }
+      }
+    } catch (e) {
+      logger.severe('Failed to fetch FTrade data: $e');
     }
   }
 
-  final Map<String, double> countryDataImports = {
-    'Saudi Arabia': 20,
-    'UAE': 25,
-    'Qatar': 15,
-    'Kuwait': 10,
-    'Oman': 5,
-    'Bahrain': 3,
-  };
-  final Map<String, double> countryDataExports = {
-    'Saudi Arabia': 30,
-    'UAE': 20,
-    'Qatar': 25,
-    'Kuwait': 15,
-    'Oman': 10,
-    'Bahrain': 5,
-  };
-  final Map<String, double> countryDataReExports = {
-    'Saudi Arabia': 5,
-    'UAE': 15,
-    'Qatar': 20,
-    'Kuwait': 25,
-    'Oman': 30,
-    'Bahrain': 35,
-  };
+  Map<String, double> get fullData {
+    return [
+      fullDataImports,
+      fullDataExports,
+      fullDataReExports,
+    ][selectedCategoryIndex];
+  }
 
-  Map<String, double> get currentData => [
-        countryDataImports,
-        countryDataExports,
-        countryDataReExports,
-      ][selectedCategoryIndex];
+  Map<String, double> get currentData {
+    if (selectedCountry != null) {
+      return {
+        selectedCountry!: [
+              countryDataImports,
+              countryDataExports,
+              countryDataReExports,
+            ][selectedCategoryIndex][selectedCountry] ??
+            0.0,
+      };
+    }
+    return [
+      countryDataImports,
+      countryDataExports,
+      countryDataReExports,
+    ][selectedCategoryIndex];
+  }
+
+  void _onPieChartSectionTapped(PieTouchResponse pieTouchResponse) {
+    if (pieTouchResponse.touchedSection != null) {
+      final touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+      if (touchedIndex >= 0 && touchedIndex < currentData.keys.length) {
+        final country = currentData.keys.elementAt(touchedIndex);
+        setState(() {
+          if (selectedCountry == country) {
+            selectedCountry = null;
+          } else {
+            selectedCountry = country;
+          }
+        });
+      }
+    }
+  }
 
   Widget _buildSegmentedControl() {
     return Container(
@@ -104,6 +171,25 @@ class _FTradePageState extends State<FTradePage> {
         pressedColor: Colors.lightBlue[100], // Color when a segment is pressed
       ),
     );
+  }
+
+  void _onSearchPressed() async {
+    final newSearchConfig = FTradeSearchConfig(
+      date: DateFormat('yyyy-MM-dd').format(DateTime.now()),
+      year: selectedYear,
+      tradeType: [
+        'Imports',
+        'Exports',
+        'Re-exports',
+      ][selectedCategoryIndex],
+    );
+
+    List<FTradeSearchConfig> currentHistory = await loadFTradeSearchHistory();
+    currentHistory.add(newSearchConfig);
+    await saveFTradeSearchHistory(currentHistory);
+
+    HistoryNotifier().notifyListeners();
+    fetchFTradeData();
   }
 
   @override
@@ -146,7 +232,7 @@ class _FTradePageState extends State<FTradePage> {
             child: Text(
               'Search Filters',
               style: TextStyle(
-                color: Colors.black45, // Light gray color for the text
+                color: Colors.black45,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -156,64 +242,35 @@ class _FTradePageState extends State<FTradePage> {
         Card(
           elevation: 1,
           margin: const EdgeInsets.symmetric(horizontal: 16),
-          color: Colors.grey[50], // Light gray color for the card background
+          color: Colors.grey[50],
           child: Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: DropdownButtonFormField<int>(
-                        decoration: const InputDecoration(labelText: 'Year'),
-                        value: selectedYear,
-                        onChanged: (int? newValue) {
-                          setState(() {
-                            selectedYear = newValue!;
-                          });
-                        },
-                        items: List.generate(5, (index) {
-                          return DropdownMenuItem(
-                            value: DateTime.now().year - index,
-                            child: Text('${DateTime.now().year - index}'),
-                          );
-                        }),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(labelText: 'Product'),
-                        value: selectedProduct,
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            selectedProduct = newValue!;
-                          });
-                        },
-                        items: <String>[
-                          'All',
-                          'Product 1',
-                          'Product 2',
-                          'Product 3'
-                        ].map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                      ),
-                    ),
-                  ],
+                DropdownButtonFormField<int>(
+                  decoration: const InputDecoration(labelText: 'Year'),
+                  value: selectedYear,
+                  onChanged: (int? newValue) {
+                    setState(() {
+                      selectedYear = newValue!;
+                    });
+                  },
+                  items: List<DropdownMenuItem<int>>.generate(
+                    5,
+                    (index) {
+                      int year = DateTime.now().year - 1 - index;
+                      return DropdownMenuItem<int>(
+                        value: year,
+                        child: Text(year.toString()),
+                      );
+                    },
+                  ),
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {
-                    // search functionality
-                    logger.info('Search clicked');
-                  },
+                  onPressed: _onSearchPressed,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor:
-                        Colors.blue, // Blue color for the search button
+                    backgroundColor: Colors.blue,
                   ),
                   child: const Text(
                     'Search',
@@ -233,9 +290,16 @@ class _FTradePageState extends State<FTradePage> {
       height: 300,
       child: PieChart(
         PieChartData(
-          sections: getSections(currentData), // current dataset
+          sections: getSections(fullData),
           centerSpaceRadius: 60,
           sectionsSpace: 2,
+          pieTouchData: PieTouchData(
+            touchCallback: (FlTouchEvent event, pieTouchResponse) {
+              if (event is FlTapUpEvent && pieTouchResponse != null) {
+                _onPieChartSectionTapped(pieTouchResponse);
+              }
+            },
+          ),
         ),
       ),
     );
@@ -249,9 +313,18 @@ class _FTradePageState extends State<FTradePage> {
         BarChartGroupData(
           x: i++,
           barRods: [
-            BarChartRodData(toY: value, color: Colors.blue),
+            BarChartRodData(
+              toY: value,
+              color: Colors.blue,
+              width: 22,
+              borderRadius: BorderRadius.circular(4),
+              backDrawRodData: BackgroundBarChartRodData(
+                show: true,
+                toY: currentData.values.reduce(max) * 1.2,
+                color: Colors.grey[200],
+              ),
+            ),
           ],
-          showingTooltipIndicators: [0],
         ),
       );
     });
@@ -263,16 +336,29 @@ class _FTradePageState extends State<FTradePage> {
         child: BarChart(
           BarChartData(
             alignment: BarChartAlignment.spaceAround,
-            maxY: currentData.values.reduce(max) * 1.2,
+            maxY: currentData.isNotEmpty
+                ? currentData.values.reduce(max) * 1.2
+                : 0,
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   getTitlesWidget: (double value, TitleMeta meta) {
+                    final String countryName =
+                        currentData.keys.elementAt(value.toInt());
+                    // Check and replace country name if necessary
+                    String displayCountryName = countryName;
+                    if (countryName.toUpperCase() == "SAUDI ARABIA") {
+                      displayCountryName = "KSA";
+                    } else if (countryName.toUpperCase() ==
+                        "UNITED ARAB EMIRATES") {
+                      displayCountryName = "UAE";
+                    }
+
                     return Padding(
                       padding: const EdgeInsets.only(top: 6.0),
                       child: Text(
-                        currentData.keys.elementAt(value.toInt()),
+                        displayCountryName,
                         style: const TextStyle(fontSize: 10),
                       ),
                     );
@@ -284,7 +370,19 @@ class _FTradePageState extends State<FTradePage> {
                 sideTitles: SideTitles(
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
-                    return Text(value.toString(),
+                    String formattedValue;
+                    if (value >= 1000000000) {
+                      formattedValue =
+                          '${(value / 1000000000).toStringAsFixed(1)}B';
+                    } else if (value >= 1000000) {
+                      formattedValue =
+                          '${(value / 1000000).toStringAsFixed(1)}M';
+                    } else if (value >= 1000) {
+                      formattedValue = '${(value / 1000).toStringAsFixed(1)}K';
+                    } else {
+                      formattedValue = value.toStringAsFixed(0);
+                    }
+                    return Text(formattedValue,
                         style: const TextStyle(fontSize: 10));
                   },
                   reservedSize: 30,
@@ -301,6 +399,30 @@ class _FTradePageState extends State<FTradePage> {
             ),
             gridData: const FlGridData(show: false),
             barGroups: barGroups,
+            barTouchData: BarTouchData(
+              enabled: true,
+              touchTooltipData: BarTouchTooltipData(
+                tooltipBgColor: Colors.blueGrey,
+                getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                  String formattedValue;
+                  if (rod.toY >= 1000000000) {
+                    formattedValue =
+                        '${(rod.toY / 1000000000).toStringAsFixed(1)}B';
+                  } else if (rod.toY >= 1000000) {
+                    formattedValue =
+                        '${(rod.toY / 1000000).toStringAsFixed(1)}M';
+                  } else if (rod.toY >= 1000) {
+                    formattedValue = '${(rod.toY / 1000).toStringAsFixed(1)}K';
+                  } else {
+                    formattedValue = rod.toY.toStringAsFixed(0);
+                  }
+                  return BarTooltipItem(
+                    formattedValue,
+                    const TextStyle(color: Colors.white),
+                  );
+                },
+              ),
+            ),
           ),
         ),
       ),
@@ -308,13 +430,42 @@ class _FTradePageState extends State<FTradePage> {
   }
 
   List<PieChartSectionData> getSections(Map<String, double> dataset) {
+    // Define a map of country names and their corresponding colors
+    Map<String, Color> countryColors = {
+      'BAHRAIN': const Color.fromARGB(255, 255, 190, 180), // Pastel Orange
+      'KUWAIT': const Color(0xFFFFE5D6), // Pastel Pink
+      'OMAN': const Color.fromARGB(255, 255, 227, 227), // Pastel Blue
+      'QATAR': const Color.fromARGB(255, 209, 120, 120), // Pastel Green
+      'KSA': const Color.fromARGB(255, 219, 255, 199), // Pastel Red
+      'UAE': const Color.fromARGB(255, 169, 169, 169), // Pastel Yellow
+    };
+
     return dataset.entries.map((entry) {
+      String countryName = entry.key;
+      // Check and replace country name if necessary
+      if (countryName.toUpperCase() == "SAUDI ARABIA") {
+        countryName = "KSA";
+      } else if (countryName.toUpperCase() == "UNITED ARAB EMIRATES") {
+        countryName = "UAE";
+      }
+
+      final isTouched = countryName == selectedCountry;
+      final fontSize = isTouched ? 20.0 : 16.0;
+      final radius = isTouched ? 110.0 : 100.0;
+
+      // Get the color for the current country, or use a default color if not found
+      final color = countryColors[countryName] ?? Colors.grey[300]!;
+
       return PieChartSectionData(
-        color: Colors.blue[100 * (entry.key.length % 5 + 1)],
+        color: color,
         value: entry.value,
-        title: entry.key,
-        radius: 100,
-        titleStyle: const TextStyle(color: Colors.white, fontSize: 16),
+        title: countryName,
+        radius: radius,
+        titleStyle: TextStyle(
+          fontSize: fontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        ),
       );
     }).toList();
   }
