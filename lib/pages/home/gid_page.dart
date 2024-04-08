@@ -12,9 +12,9 @@ final Logger logger = Logger('GIDPage');
 
 class CountryData {
   final String name;
-  final double noOfFirms;
-  final double investment;
-  final double noOfLabor;
+  double noOfFirms;
+  double investment;
+  double noOfLabor;
 
   CountryData({
     required this.name,
@@ -23,11 +23,13 @@ class CountryData {
     required this.noOfLabor,
   });
 
-  // Correct placement of the factory constructor
-  factory CountryData.fromApi(Map<String, dynamic> data) {
-    // Ensure correct mapping from your API data to the CountryData fields
+  factory CountryData.fromApi(
+      Map<String, dynamic> data, Map<int, String> countryIdToNameMap) {
+    int countryId = data['countryid'];
+    String countryName = countryIdToNameMap[countryId] ?? 'Unknown';
+
     return CountryData(
-      name: data['nameenglish'], // Adjust based on actual API response
+      name: countryName, // Now correctly using the country name
       noOfFirms: double.tryParse(data['cnttotfirms'].toString()) ?? 0.0,
       investment: double.tryParse(data['cnttotinvusd'].toString()) ?? 0.0,
       noOfLabor: double.tryParse(data['cnttotmpqty'].toString()) ?? 0.0,
@@ -74,6 +76,7 @@ class _GIDPageState extends State<GIDPage> {
   double totalInvestment = 0;
   double totalLabor = 0;
   late int selectedCountryId;
+  Map<int, String> countryIdToNameMap = {};
 
   ApiService apiService = ApiService();
 
@@ -108,7 +111,24 @@ class _GIDPageState extends State<GIDPage> {
             : 0;
       });
     });
+    initializeData();
+  }
+
+  Future<void> initializeData() async {
+    await buildCountryIdToNameMap();
     fetchSummaryData();
+    await fetchSummaryDataForCountries();
+  }
+
+  Future<void> buildCountryIdToNameMap() async {
+    List<dynamic> countries = await apiService.fetchCountries();
+    for (var country in countries) {
+      int countryId = country['countryid'];
+      String countryName = country['nameenglish'];
+      setState(() {
+        countryIdToNameMap[countryId] = countryName;
+      });
+    }
   }
 
   Future<void> fetchGCCSummaryData() async {
@@ -233,6 +253,7 @@ class _GIDPageState extends State<GIDPage> {
     await saveSearchHistory(currentHistory);
     historyNotifier.notifyListeners();
     await fetchGCCSummaryData();
+    await fetchSummaryDataForCountries();
   }
 
   void updateSummaryAndGraphs(List<CountryData> data) {
@@ -271,8 +292,9 @@ class _GIDPageState extends State<GIDPage> {
       // Filter or process stats for GCC if needed or use directly if fetching for a specific country
 
       // Example processing, replace with actual logic as needed
-      var processedData =
-          stats.map((stat) => CountryData.fromApi(stat)).toList();
+      var processedData = stats
+          .map((stat) => CountryData.fromApi(stat, countryIdToNameMap))
+          .toList();
 
       setState(() {
         countryDataList = processedData;
@@ -534,6 +556,64 @@ class _GIDPageState extends State<GIDPage> {
     );
   }
 
+  Future<void> fetchSummaryDataForCountries() async {
+    Map<int, String> countryNames =
+        {}; // Map to hold country IDs and their names
+    // Populate countryNames with the country ID and name
+    _countries.forEach((country) {
+      countryNames[country['countryid']] = country['nameenglish'];
+    });
+
+    List<int> countryIds = [
+      10012,
+      10108,
+      10136,
+      10168,
+      10181,
+      10207,
+    ];
+    Map<String, CountryData> fetchedDataMap = {};
+
+    for (int countryId in countryIds) {
+      try {
+        List<dynamic> summaryStats = await apiService.fetchGIDStats(
+          year: selectedYear,
+          countryId: countryId,
+          isicCode: int.parse(selectedISICSector),
+        );
+
+        // Process each entry in the summary stats
+        summaryStats.forEach((data) {
+          String countryName = countryNames[data['countryid']] ?? 'Unknown';
+          if (!fetchedDataMap.containsKey(countryName)) {
+            fetchedDataMap[countryName] =
+                CountryData.fromApi(data, countryIdToNameMap);
+          } else {
+            // Merge data for company statuses 4 and 5
+            fetchedDataMap[countryName]!.noOfFirms +=
+                double.tryParse(data['cnttotfirms'].toString()) ?? 0.0;
+            fetchedDataMap[countryName]!.investment +=
+                double.tryParse(data['cnttotinvusd'].toString()) ?? 0.0;
+            fetchedDataMap[countryName]!.noOfLabor +=
+                double.tryParse(data['cnttotmpqty'].toString()) ?? 0.0;
+          }
+        });
+      } catch (e, stacktrace) {
+        logger.severe(
+            "Failed to fetch summary data for country ID $countryId: $e",
+            e,
+            stacktrace);
+      }
+    }
+
+    // Convert the map back to a list for easy use with charting libraries
+    List<CountryData> fetchedDataList = fetchedDataMap.values.toList();
+
+    setState(() {
+      countryDataList = fetchedDataList;
+    });
+  }
+
   String formatAxisValue(double value) {
     if (value >= 1000 && value < 10000) {
       // For values between 1K and 9.999K, include one decimal point
@@ -555,8 +635,6 @@ class _GIDPageState extends State<GIDPage> {
   }) {
     // Check if countryDataList is empty and return an empty widget or placeholder.
     if (countryDataList.isEmpty) {
-      // Example: return an empty chart or some placeholder
-      // Adjust this based on your UI requirements
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20),
         child: const Center(child: Text('No data available')),
@@ -581,32 +659,28 @@ class _GIDPageState extends State<GIDPage> {
                 minY: 0,
                 gridData: const FlGridData(show: false),
                 barGroups: countryDataList.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final country = entry.value;
                   return BarChartGroupData(
-                    x: index,
+                    x: entry
+                        .key, // This should match the index in countryDataList
                     barRods: [
                       BarChartRodData(
-                        toY: dataSelector(country),
+                        toY: dataSelector(entry.value),
                         color: barColor,
                         borderRadius: BorderRadius.zero,
-                      ),
+                      )
                     ],
-                    showingTooltipIndicators: [0],
                   );
                 }).toList(),
                 barTouchData: BarTouchData(
                   touchTooltipData: BarTouchTooltipData(
                     tooltipBgColor: Colors.blueGrey,
-                    tooltipPadding: const EdgeInsets.all(4), // tooltip padding
-                    tooltipMargin: 8, // Adjust tooltip margin
+                    tooltipPadding: const EdgeInsets.all(4),
+                    tooltipMargin: 8,
                     getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final countryName = countryDataList[group.x].name;
                       return BarTooltipItem(
-                        formatAxisValue(rod.toY) +
-                            (rod.toY >= 1000 ? '' : ''), // tooltip text
-                        const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12), // tooltip font size
+                        '$countryName: ${formatAxisValue(rod.toY)}',
+                        const TextStyle(color: Colors.white, fontSize: 12),
                       );
                     },
                   ),
@@ -615,23 +689,30 @@ class _GIDPageState extends State<GIDPage> {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      getTitlesWidget: (double value, _) {
-                        return Text(countryDataList[value.toInt()].name,
-                            style: const TextStyle(
-                                color: Colors.black, fontSize: 10));
+                      getTitlesWidget: (value, meta) {
+                        final index = value.toInt();
+                        if (index >= 0 && index < countryDataList.length) {
+                          final countryName = countryDataList[index].name;
+                          return Text(countryName,
+                              style: const TextStyle(
+                                  color: Colors.black, fontSize: 10));
+                        }
+                        return const Text('');
                       },
+                      reservedSize:
+                          40, // Adjust based on the size of the labels
                     ),
                   ),
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      getTitlesWidget: (double value, _) => Text(
+                      getTitlesWidget: (value, meta) => Text(
                           formatAxisValue(value),
                           style: const TextStyle(
                               color: Color(0xff7589a2),
                               fontWeight: FontWeight.bold,
                               fontSize: 14)),
-                      reservedSize: 40, // y-axis label spacing
+                      reservedSize: 40,
                     ),
                   ),
                   topTitles: const AxisTitles(

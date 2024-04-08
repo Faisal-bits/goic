@@ -136,6 +136,33 @@ class _HistoryPageState extends State<HistoryPage> {
     );
   }
 
+  Future<void> clearAllSearchHistory() async {
+    // This assumes saveSearchHistory() expects a List<SearchConfig> and
+    // overwrites the existing history with the provided list.
+    await saveSearchHistory([]); // Pass an empty list to clear all history.
+    refreshHistory(); // Refresh the UI to reflect the deletion.
+  }
+
+  Future<void> deleteTodaysSearches() async {
+    List<SearchConfig> history = await loadSearchHistory();
+    String today = DateFormat('yyyy-MM-dd').format(DateTime.now());
+    List<SearchConfig> filteredHistory = history
+        .where((item) =>
+            DateFormat('yyyy-MM-dd').format(DateTime.parse(item.date)) != today)
+        .toList();
+    await saveSearchHistory(filteredHistory);
+  }
+
+  void _deleteAllRecords() async {
+    await clearAllSearchHistory(); // This should now clear all history.
+    refreshHistory(); // Refresh to show the updated state.
+  }
+
+  void _deleteTodaysRecords() async {
+    await deleteTodaysSearches(); // This should clear today's history
+    refreshHistory();
+  }
+
   @override
   Widget build(BuildContext context) {
     final localizations = AppLocalizations.of(context);
@@ -143,6 +170,18 @@ class _HistoryPageState extends State<HistoryPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(localizations?.searchHistory ?? 'Search History'),
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.delete_forever),
+            onPressed: () => _deleteAllRecords(),
+            tooltip: localizations?.deleteAll ?? 'Delete All',
+          ),
+          IconButton(
+            icon: const Icon(Icons.today),
+            onPressed: () => _deleteTodaysRecords(),
+            tooltip: localizations?.deleteTodays ?? 'Delete Today\'s',
+          ),
+        ],
       ),
       body: FutureBuilder<List<SearchConfig>>(
         future: _searchHistoryFuture,

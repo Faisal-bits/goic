@@ -66,6 +66,8 @@ class AppLocalizations {
       'saveChanges': 'Save Changes',
       'edit': 'Edit',
       'cancel': 'Cancel',
+      'deleteAll': 'Delete All',
+      'deleteTodays': 'Delete Today\'s',
     },
     'ar': {
       'home': 'الرئيسية',
@@ -123,6 +125,8 @@ class AppLocalizations {
       'saveChanges': 'حفظ التغييرات',
       'edit': 'تعديل',
       'cancel': 'إلغاء',
+      'deleteAll': 'حذف الكل',
+      'deleteTodays': 'حذف بحوث اليوم',
     },
   };
 
@@ -312,6 +316,13 @@ class AppLocalizations {
   String get cancel {
     return _localizedValues[locale.languageCode]?['cancel'] ?? 'Cancel';
   }
+
+  String get deleteAll =>
+      _localizedValues[locale.languageCode]?['deleteAll'] ?? 'Delete All';
+
+  String get deleteTodays =>
+      _localizedValues[locale.languageCode]?['deleteTodays'] ??
+      'Delete Today\'s';
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
