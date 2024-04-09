@@ -5,6 +5,7 @@ import 'package:goic/models/search_config.dart';
 import 'package:goic/models/shared_history.dart';
 import 'package:intl/intl.dart';
 import 'package:goic/models//history_notifier.dart';
+import 'package:goic/localization.dart';
 
 class SocioEconomicSearchPage extends StatefulWidget {
   const SocioEconomicSearchPage({super.key});
@@ -62,6 +63,10 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
 
     historyNotifier.notifyListeners();
 
+    String selectedEconomicIndicatorName = _economicIndicators.firstWhere(
+        (indicator) =>
+            indicator['soecid'] == selectedEconomicIndicatorId)['nameenglish'];
+
     if (!mounted) return;
     Navigator.push(
       context,
@@ -70,6 +75,7 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
           countryId: selectedCountryId,
           comparisonCountryId: selectedComparisonCountryId,
           economicIndicatorId: selectedEconomicIndicatorId,
+          economicIndicatorName: selectedEconomicIndicatorName,
           comparisonMode: comparisonModeEnabled,
         ),
       ),
@@ -78,9 +84,11 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Socio-Economic Search'),
+        title: Text(localizations.socioEconomic),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -94,7 +102,8 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                 children: [
                   DropdownButtonFormField<int>(
                     value: selectedCountryId,
-                    decoration: const InputDecoration(labelText: 'Country'),
+                    decoration:
+                        InputDecoration(labelText: localizations.country),
                     onChanged: (value) {
                       setState(() {
                         selectedCountryId = value!;
@@ -103,7 +112,10 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                     items: _countries.map<DropdownMenuItem<int>>((country) {
                       return DropdownMenuItem<int>(
                         value: country['countryid'],
-                        child: Text(country['nameenglish']),
+                        child: Text(country[
+                            localizations.locale.languageCode == 'en'
+                                ? 'nameenglish'
+                                : 'namearabic']),
                       );
                     }).toList(),
                     isExpanded: true,
@@ -111,8 +123,8 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                   const SizedBox(height: 16),
                   DropdownButtonFormField<int>(
                     value: selectedEconomicIndicatorId,
-                    decoration:
-                        const InputDecoration(labelText: 'Economic Indicator'),
+                    decoration: InputDecoration(
+                        labelText: localizations.economicIndicator),
                     onChanged: (value) {
                       setState(() {
                         selectedEconomicIndicatorId = value!;
@@ -122,14 +134,17 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                         .map<DropdownMenuItem<int>>((indicator) {
                       return DropdownMenuItem<int>(
                         value: indicator['soecid'],
-                        child: Text(indicator['nameenglish']),
+                        child: Text(indicator[
+                            localizations.locale.languageCode == 'en'
+                                ? 'nameenglish'
+                                : 'namearabic']),
                       );
                     }).toList(),
                     isExpanded: true,
                   ),
                   const SizedBox(height: 16),
                   SwitchListTile(
-                    title: const Text('Comparison Mode'),
+                    title: Text(localizations.comparisonMode),
                     value: comparisonModeEnabled,
                     onChanged: (value) {
                       setState(() {
@@ -141,8 +156,8 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
                       value: selectedComparisonCountryId,
-                      decoration: const InputDecoration(
-                          labelText: 'Comparison Country'),
+                      decoration: InputDecoration(
+                          labelText: localizations.comparisonCountry),
                       onChanged: (value) {
                         setState(() {
                           selectedComparisonCountryId = value!;
@@ -151,7 +166,10 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                       items: _countries.map<DropdownMenuItem<int>>((country) {
                         return DropdownMenuItem<int>(
                           value: country['countryid'],
-                          child: Text(country['nameenglish']),
+                          child: Text(country[
+                              localizations.locale.languageCode == 'en'
+                                  ? 'nameenglish'
+                                  : 'namearabic']),
                         );
                       }).toList(),
                       isExpanded: true,
@@ -164,7 +182,7 @@ class _SocioEconomicSearchPageState extends State<SocioEconomicSearchPage> {
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
                     ),
-                    child: const Text('Search'),
+                    child: Text(localizations.search),
                   ),
                 ],
               ),

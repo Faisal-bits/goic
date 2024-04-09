@@ -8,7 +8,8 @@ class ApiService {
     final response =
         await http.get(Uri.parse('$_baseUrl/countries/?format=json'));
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      return json.decode(decodedResponse);
     } else {
       throw Exception('Failed to load countries');
     }
@@ -18,7 +19,8 @@ class ApiService {
     final response =
         await http.get(Uri.parse('$_baseUrl/companystatuses/?format=json'));
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      return json.decode(decodedResponse);
     } else {
       throw Exception('Failed to load company statuses');
     }
@@ -27,7 +29,8 @@ class ApiService {
   Future<List<dynamic>> fetchISICCodes() async {
     final response = await http.get(Uri.parse('$_baseUrl/isic/?format=json'));
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      return json.decode(decodedResponse);
     } else {
       throw Exception('Failed to load ISIC codes');
     }
@@ -47,7 +50,8 @@ class ApiService {
     }
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      return json.decode(decodedResponse);
     } else {
       throw Exception('Failed to load GID stats');
     }
@@ -57,7 +61,8 @@ class ApiService {
     final response =
         await http.get(Uri.parse('$_baseUrl/soecindicators/?format=json'));
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      return json.decode(decodedResponse);
     } else {
       throw Exception('Failed to load SOEC indicators');
     }
@@ -69,7 +74,8 @@ class ApiService {
         '$_baseUrl/soecdata/?format=json&year=$year&countryid=$countryId';
     final response = await http.get(Uri.parse(url));
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      return json.decode(decodedResponse);
     } else {
       throw Exception('Failed to load SOEC data');
     }
@@ -80,9 +86,9 @@ class ApiService {
     String url =
         '$_baseUrl/ftrade/?format=json&year=$year&countryid=$countryId';
     final response = await http.get(Uri.parse(url));
-
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final decodedResponse = utf8.decode(response.bodyBytes);
+      return json.decode(decodedResponse);
     } else {
       throw Exception('Failed to load FTrade data');
     }

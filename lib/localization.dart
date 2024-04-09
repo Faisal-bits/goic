@@ -68,6 +68,28 @@ class AppLocalizations {
       'cancel': 'Cancel',
       'deleteAll': 'Delete All',
       'deleteTodays': 'Delete Today\'s',
+      'searchFilters': 'Search Filters',
+      'gccSummaryStats': 'GCC - Summary Stats',
+      'gccBarGraphs': 'GCC - Bar Graphs',
+      'search': 'Search',
+      'year': 'Year',
+      'isicSector': 'ISIC Sector',
+      'status': 'Status',
+      'noOfFirms': 'No. of Firms',
+      'investmentUSD': 'Investment (USD)',
+      'noOfLabor': 'No. of Labor',
+      'investmentUSDMill': 'Investment (USD Mill)',
+      'noDataAvailable': 'No data available',
+      'all': 'All',
+      'licensed': 'Licensed',
+      'operational': 'Operational',
+      'summary': 'Summary',
+      'countryArea': 'Country Area',
+      'population': 'Population',
+      'country': 'Country',
+      'economicIndicator': 'Economic Indicator',
+      'comparisonMode': 'Comparison Mode',
+      'comparisonCountry': 'Comparison Country',
     },
     'ar': {
       'home': 'الرئيسية',
@@ -108,8 +130,8 @@ class AppLocalizations {
       'likesReplies': '@likes إعجابات، @replies ردود',
       'error': 'خطأ',
       'loading': 'جار التحميل...',
-      'export': 'تصدير',
-      'import': 'استيراد',
+      'exports': 'تصدير',
+      'imports': 'استيراد',
       'reExport': 'إعادة التصدير',
       'Qatar': 'قطر',
       'Saudi': 'السعودية',
@@ -127,6 +149,28 @@ class AppLocalizations {
       'cancel': 'إلغاء',
       'deleteAll': 'حذف الكل',
       'deleteTodays': 'حذف بحوث اليوم',
+      'searchFilters': 'فلاتر البحث',
+      'gccSummaryStats': 'ملخص إحصائيات دول مجلس التعاون الخليجي',
+      'gccBarGraphs': 'الرسوم البيانية الشريطية لدول مجلس التعاون الخليجي',
+      'search': 'بحث',
+      'year': 'السنة',
+      'isicSector': 'القطاع الصناعي (ISIC)',
+      'status': 'الحالة',
+      'noOfFirms': 'عدد الشركات',
+      'investmentUSD': 'الاستثمار (دولار أمريكي)',
+      'noOfLabor': 'عدد العمالة',
+      'investmentUSDMill': 'الاستثمار (دولار أمريكي)',
+      'noDataAvailable': 'لا توجد بيانات متاحة',
+      'all': 'الكل',
+      'licensed': 'مرخص',
+      'operational': 'عامل',
+      'summary': 'ملخص',
+      'countryArea': 'مساحة الدولة',
+      'population': 'عدد السكان',
+      'country': 'الدولة',
+      'economicIndicator': 'المؤشر الاقتصادي',
+      'comparisonMode': 'وضع المقارنة',
+      'comparisonCountry': 'الدولة المقارنة',
     },
   };
 
@@ -323,6 +367,83 @@ class AppLocalizations {
   String get deleteTodays =>
       _localizedValues[locale.languageCode]?['deleteTodays'] ??
       'Delete Today\'s';
+
+  String get searchFilters =>
+      _localizedValues[locale.languageCode]?['searchFilters'] ??
+      'Search Filters';
+
+  String get gccSummaryStats =>
+      _localizedValues[locale.languageCode]?['gccSummaryStats'] ??
+      'GCC - Summary Stats';
+
+  String get gccBarGraphs =>
+      _localizedValues[locale.languageCode]?['gccBarGraphs'] ??
+      'GCC - Bar Graphs';
+
+  String get search =>
+      _localizedValues[locale.languageCode]?['search'] ?? 'Search';
+
+  String get year => _localizedValues[locale.languageCode]?['year'] ?? 'Year';
+
+  String get isicSector =>
+      _localizedValues[locale.languageCode]?['isicSector'] ?? 'ISIC Sector';
+
+  String get status =>
+      _localizedValues[locale.languageCode]?['status'] ?? 'Status';
+
+  String get noOfFirms =>
+      _localizedValues[locale.languageCode]?['noOfFirms'] ?? 'No. of Firms';
+
+  String get investmentUSD =>
+      _localizedValues[locale.languageCode]?['investmentUSD'] ??
+      'Investment (USD)';
+
+  String get noOfLabor =>
+      _localizedValues[locale.languageCode]?['noOfLabor'] ?? 'No. of Labor';
+
+  String get investmentUSDMill =>
+      _localizedValues[locale.languageCode]?['investmentUSDMill'] ??
+      'Investment (USD Mill)';
+
+  String get noDataAvailable =>
+      _localizedValues[locale.languageCode]?['noDataAvailable'] ??
+      'No data available';
+
+  String get all => _localizedValues[locale.languageCode]?['all'] ?? 'All';
+
+  String get licensed =>
+      _localizedValues[locale.languageCode]?['licensed'] ?? 'Licensed';
+
+  String get operational =>
+      _localizedValues[locale.languageCode]?['operational'] ?? 'Operational';
+
+  String get imports =>
+      _localizedValues[locale.languageCode]?['imports'] ?? 'Import';
+
+  String get exports =>
+      _localizedValues[locale.languageCode]?['exports'] ?? 'Export';
+
+  String get reExport =>
+      _localizedValues[locale.languageCode]?['reExport'] ?? 'Re-exports';
+
+  String get summary =>
+      _localizedValues[locale.languageCode]?['summary'] ?? 'Summary';
+
+  String get countryArea =>
+      _localizedValues[locale.languageCode]?['countryArea'] ?? 'Country Area';
+  String get population =>
+      _localizedValues[locale.languageCode]?['population'] ?? 'Population';
+  String get country =>
+      _localizedValues[locale.languageCode]?['country'] ?? 'Country';
+  String get economicIndicator =>
+      _localizedValues[locale.languageCode]?['economicIndicator'] ??
+      'Economic Indicator';
+  String get comparisonMode =>
+      _localizedValues[locale.languageCode]?['comparisonMode'] ??
+      'Comparison Mode';
+  String get comparisonCountry =>
+      _localizedValues[locale.languageCode]?['comparisonCountry'] ??
+      'Comparison Country';
 }
 
 class AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

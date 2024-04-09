@@ -169,6 +169,9 @@ class _HistoryPageState extends State<HistoryPage> {
                 ),
               );
             } else if (config is SOESearchConfig) {
+              String economicIndicatorName =
+                  _economicIndicatorIdToNameMap[config.economicIndicatorId] ??
+                      'Unknown';
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -176,6 +179,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     countryId: config.countryId,
                     comparisonCountryId: config.comparisonCountryId,
                     economicIndicatorId: config.economicIndicatorId,
+                    economicIndicatorName: economicIndicatorName,
                     comparisonMode: config.comparisonMode,
                   ),
                 ),
@@ -201,6 +205,7 @@ class _HistoryPageState extends State<HistoryPage> {
     }
 
     List<Widget> groupedWidgets = [];
+
     groupedByDate.forEach((date, configs) {
       String title;
       DateTime now = DateTime.now();
@@ -295,18 +300,28 @@ class _HistoryPageState extends State<HistoryPage> {
           _searchHistoryFuture,
           _fTradeSearchHistoryFuture,
           _soeSearchHistoryFuture,
-        ]).then((results) => [...results[0], ...results[1], ...results[2]]),
+        ]).then((results) {
+          List<dynamic> combinedResults = [];
+          combinedResults.addAll(results[0]);
+          combinedResults.addAll(results[1]);
+          combinedResults.addAll(results[2]);
+          return combinedResults;
+        }),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-                child: Text(
-                    localizations?.noRecentSearches ?? 'No recent searches'));
-          }
 
-          return _buildGroupedSearches(snapshot.data!);
+          if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+            return _buildGroupedSearches(snapshot.data!);
+          } else {
+            return Center(
+              child: Text(
+                localizations?.noRecentSearches ?? 'No recent searches',
+                style: const TextStyle(fontSize: 18),
+              ),
+            );
+          }
         },
       ),
     );

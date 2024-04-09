@@ -8,6 +8,8 @@ import 'package:goic/models/search_config.dart';
 import '../../models/history_notifier.dart';
 import 'package:intl/intl.dart';
 import 'package:goic/models/shared_history.dart';
+import 'package:goic/localization.dart';
+import 'dart:async';
 
 final Logger logger = Logger('FTrade');
 
@@ -25,19 +27,34 @@ class FTradePage extends StatefulWidget {
 class _FTradePageState extends State<FTradePage> {
   int selectedYear = DateTime.now().year - 1;
   String selectedProduct = 'All';
-  int selectedCategoryIndex = 0; // 0: Imports, 1: Exports, 2: Re-exports
+  int selectedCategoryIndex = 0;
   String? selectedCountry;
 
   Map<String, double> countryDataImports = {};
   Map<String, double> countryDataExports = {};
   Map<String, double> countryDataReExports = {};
 
+  Map<String, double> fullDataImports = {};
+  Map<String, double> fullDataExports = {};
+  Map<String, double> fullDataReExports = {};
+
   ApiService apiService = ApiService();
+
+  final _dataLoadingStream = StreamController<bool>.broadcast();
+
+  _FTradePageState() {
+    countryDataImports = {};
+    countryDataExports = {};
+    countryDataReExports = {};
+  }
 
   @override
   void initState() {
     super.initState();
     int currentYear = DateTime.now().year;
+    selectedYear = widget.year ?? (currentYear - 1);
+    selectedCategoryIndex = widget.initialCategoryIndex;
+
     selectedYear = widget.year ?? (currentYear - 1);
     selectedCategoryIndex = widget.initialCategoryIndex;
 
@@ -51,17 +68,19 @@ class _FTradePageState extends State<FTradePage> {
     fetchFTradeData();
   }
 
-  Map<String, double> fullDataImports = {};
-  Map<String, double> fullDataExports = {};
-  Map<String, double> fullDataReExports = {};
-
   Future<void> fetchFTradeData() async {
     try {
       List<dynamic> countries = await apiService.fetchCountries();
 
       for (var country in countries) {
         int countryId = country['countryid'];
-        String countryName = country['nameenglish'];
+        String countryName;
+        if (!mounted) return;
+        if (Localizations.localeOf(context).languageCode == 'en') {
+          countryName = country['nameenglish'];
+        } else {
+          countryName = country['namearabic'];
+        }
 
         // Exclude the country with ID 10096 (GCC)
         if (countryId == 10096) {
@@ -93,6 +112,8 @@ class _FTradePageState extends State<FTradePage> {
     } catch (e) {
       logger.severe('Failed to fetch FTrade data: $e');
     }
+
+    _dataLoadingStream.sink.add(true);
   }
 
   Map<String, double> get fullData {
@@ -137,22 +158,22 @@ class _FTradePageState extends State<FTradePage> {
     }
   }
 
-  Widget _buildSegmentedControl() {
+  Widget _buildSegmentedControl(AppLocalizations localizations) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: CupertinoSegmentedControl<int>(
-        children: const {
+        children: {
           0: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text('Imports'),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(localizations.imports),
           ),
           1: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text('Exports'),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(localizations.exports),
           ),
           2: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Text('Re-exports'),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(localizations.reExport),
           ),
         },
         onValueChanged: (int index) {
@@ -161,14 +182,14 @@ class _FTradePageState extends State<FTradePage> {
           });
         },
         groupValue: selectedCategoryIndex,
-        // color properties here
-        unselectedColor: const Color.fromARGB(
-            255, 245, 252, 255), // Light blue color for unselected segments
         selectedColor:
-            Colors.lightBlue, // Lighter blue color for the selected segment
-        borderColor:
-            const Color.fromARGB(255, 77, 161, 200), // Border color to match
-        pressedColor: Colors.lightBlue[100], // Color when a segment is pressed
+            Colors.blue, // Set selected segment background color to blue
+        unselectedColor: Colors
+            .white, // Optionally, set unselected segments to a different color
+        borderColor: Colors
+            .blue, // Optionally, match the border color with the selected color
+        pressedColor: Colors.blue
+            .withOpacity(0.5), // Optional, for visual feedback on press
       ),
     );
   }
@@ -194,44 +215,62 @@ class _FTradePageState extends State<FTradePage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Foreign Trade Analysis'),
+        title: Text(localizations.fTrade),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildSearchCard(),
-            _buildSegmentedControl(),
-            const SizedBox(height: 20),
-            Text(
-              '${[
-                "Imports",
-                "Exports",
-                "Re-exports"
-              ][selectedCategoryIndex]} - Summary',
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            _buildPieChart(),
-            const SizedBox(height: 20),
-            _buildBarChart(),
-          ],
-        ),
+      body: StreamBuilder<bool>(
+        stream: _dataLoadingStream.stream,
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.hasData && snapshot.data!) {
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildSearchCard(localizations),
+                  _buildSegmentedControl(localizations),
+                  const SizedBox(height: 20),
+                  Text(
+                    '${[
+                      localizations.imports,
+                      localizations.exports,
+                      localizations.reExport,
+                    ][selectedCategoryIndex]} - ${localizations.summary}',
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildPieChart(localizations),
+                  const SizedBox(height: 20),
+                  _buildBarChart(localizations),
+                ],
+              ),
+            );
+          } else {
+            return const Center(child: CircularProgressIndicator());
+          }
+        },
       ),
     );
   }
 
-  Widget _buildSearchCard() {
+  @override
+  void dispose() {
+    _dataLoadingStream.close();
+    super.dispose();
+  }
+
+  Widget _buildSearchCard(AppLocalizations localizations) {
     return Column(
       children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Search Filters',
-              style: TextStyle(
+              localizations.searchFilters, // Localized
+              style: const TextStyle(
                 color: Colors.black45,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -272,9 +311,9 @@ class _FTradePageState extends State<FTradePage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
                   ),
-                  child: const Text(
-                    'Search',
-                    style: TextStyle(color: Colors.white),
+                  child: Text(
+                    localizations.search,
+                    style: const TextStyle(color: Colors.white),
                   ),
                 ),
               ],
@@ -285,12 +324,12 @@ class _FTradePageState extends State<FTradePage> {
     );
   }
 
-  Widget _buildPieChart() {
+  Widget _buildPieChart(AppLocalizations localizations) {
     return SizedBox(
       height: 300,
       child: PieChart(
         PieChartData(
-          sections: getSections(fullData),
+          sections: getSections(fullData, localizations),
           centerSpaceRadius: 60,
           sectionsSpace: 2,
           pieTouchData: PieTouchData(
@@ -305,10 +344,20 @@ class _FTradePageState extends State<FTradePage> {
     );
   }
 
-  Widget _buildBarChart() {
+  Widget _buildBarChart(AppLocalizations localizations) {
     List<BarChartGroupData> barGroups = [];
     int i = 0;
     currentData.forEach((country, value) {
+      String displayCountryName =
+          country; // Default to using the country name directly
+      if (country == "SAUDI ARABIA") {
+        displayCountryName = "KSA";
+      } else if (country == "UNITED ARAB EMIRATES") {
+        displayCountryName = "UAE";
+      } else {
+        displayCountryName = localizations.getCountryName(country);
+      }
+
       barGroups.add(
         BarChartGroupData(
           x: i++,
@@ -335,57 +384,43 @@ class _FTradePageState extends State<FTradePage> {
         height: 250,
         child: BarChart(
           BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            maxY: currentData.isNotEmpty
-                ? currentData.values.reduce(max) * 1.2
-                : 0,
+            maxY: currentData.values.reduce(max) * 1.2,
             titlesData: FlTitlesData(
               bottomTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   getTitlesWidget: (double value, TitleMeta meta) {
-                    final String countryName =
-                        currentData.keys.elementAt(value.toInt());
-                    // Check and replace country name if necessary
-                    String displayCountryName = countryName;
-                    if (countryName.toUpperCase() == "SAUDI ARABIA") {
-                      displayCountryName = "KSA";
-                    } else if (countryName.toUpperCase() ==
-                        "UNITED ARAB EMIRATES") {
-                      displayCountryName = "UAE";
-                    }
-
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6.0),
-                      child: Text(
+                    final index = value.toInt();
+                    if (index >= 0 && index < currentData.keys.length) {
+                      String country = currentData.keys.elementAt(index);
+                      String displayCountryName =
+                          country; // Re-declare inside the scope
+                      if (country == "SAUDI ARABIA") {
+                        displayCountryName = "KSA";
+                      } else if (country == "UNITED ARAB EMIRATES") {
+                        displayCountryName = "UAE";
+                      } else {
+                        displayCountryName =
+                            localizations.getCountryName(country);
+                      }
+                      return Text(
                         displayCountryName,
                         style: const TextStyle(fontSize: 10),
-                      ),
-                    );
+                      );
+                    }
+                    return const Text('');
                   },
-                  reservedSize: 24,
+                  reservedSize: 35,
                 ),
               ),
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
-                    String formattedValue;
-                    if (value >= 1000000000) {
-                      formattedValue =
-                          '${(value / 1000000000).toStringAsFixed(1)}B';
-                    } else if (value >= 1000000) {
-                      formattedValue =
-                          '${(value / 1000000).toStringAsFixed(1)}M';
-                    } else if (value >= 1000) {
-                      formattedValue = '${(value / 1000).toStringAsFixed(1)}K';
-                    } else {
-                      formattedValue = value.toStringAsFixed(0);
-                    }
-                    return Text(formattedValue,
+                    return Text(value == 0 ? '0' : '${formatNumber(value)}',
                         style: const TextStyle(fontSize: 10));
                   },
-                  reservedSize: 30,
+                  reservedSize: 40,
                 ),
               ),
               rightTitles:
@@ -395,33 +430,27 @@ class _FTradePageState extends State<FTradePage> {
             ),
             borderData: FlBorderData(
               show: true,
-              border: const Border(bottom: BorderSide(), left: BorderSide()),
+              border: const Border(
+                bottom: BorderSide(),
+                left: BorderSide(),
+              ),
             ),
             gridData: const FlGridData(show: false),
             barGroups: barGroups,
             barTouchData: BarTouchData(
-              enabled: true,
               touchTooltipData: BarTouchTooltipData(
                 tooltipBgColor: Colors.blueGrey,
+                tooltipPadding: const EdgeInsets.all(8),
+                tooltipMargin: 8,
                 getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  String formattedValue;
-                  if (rod.toY >= 1000000000) {
-                    formattedValue =
-                        '${(rod.toY / 1000000000).toStringAsFixed(1)}B';
-                  } else if (rod.toY >= 1000000) {
-                    formattedValue =
-                        '${(rod.toY / 1000000).toStringAsFixed(1)}M';
-                  } else if (rod.toY >= 1000) {
-                    formattedValue = '${(rod.toY / 1000).toStringAsFixed(1)}K';
-                  } else {
-                    formattedValue = rod.toY.toStringAsFixed(0);
-                  }
+                  final formattedValue = formatNumber(rod.toY);
                   return BarTooltipItem(
                     formattedValue,
                     const TextStyle(color: Colors.white),
                   );
                 },
               ),
+              touchCallback: (FlTouchEvent event, barTouchResponse) {},
             ),
           ),
         ),
@@ -429,42 +458,60 @@ class _FTradePageState extends State<FTradePage> {
     );
   }
 
-  List<PieChartSectionData> getSections(Map<String, double> dataset) {
+  String formatNumber(double value) {
+    if (value >= 1e9) {
+      return '${(value / 1e9).toStringAsFixed(1)}B';
+    } else if (value >= 1e6) {
+      return '${(value / 1e6).toStringAsFixed(1)}M';
+    } else if (value >= 1e3) {
+      return '${(value / 1e3).toStringAsFixed(1)}K';
+    } else {
+      return value.toStringAsFixed(0);
+    }
+  }
+
+  List<PieChartSectionData> getSections(
+      Map<String, double> dataset, AppLocalizations localizations) {
     // Define a map of country names and their corresponding colors
     Map<String, Color> countryColors = {
-      'BAHRAIN': const Color.fromARGB(255, 255, 190, 180), // Pastel Orange
-      'KUWAIT': const Color(0xFFFFE5D6), // Pastel Pink
-      'OMAN': const Color.fromARGB(255, 255, 227, 227), // Pastel Blue
-      'QATAR': const Color.fromARGB(255, 209, 120, 120), // Pastel Green
-      'KSA': const Color.fromARGB(255, 219, 255, 199), // Pastel Red
-      'UAE': const Color.fromARGB(255, 169, 169, 169), // Pastel Yellow
+      'BAHRAIN': const Color(0xFFF76C5E), // Light red
+      'KUWAIT': const Color(0xFF93C572), // Light green
+      'OMAN': const Color(0xFFF9A602), // Light orange
+      'QATAR': const Color(0xFFD98880), // Light maroon
+      'SAUDI ARABIA': const Color(0xFF82E0AA), // Light green
+      'UNITED ARAB EMIRATES': const Color(0xFFD7DBDD), // Light gray
+      'البحرين': const Color(0xFFF76C5E), // Light red
+      'الكويت': const Color(0xFF93C572), // Light green
+      'عمان': const Color(0xFFF9A602), // Light orange
+      'قطر': const Color(0xFFD98880), // Light maroon
     };
 
     return dataset.entries.map((entry) {
       String countryName = entry.key;
-      // Check and replace country name if necessary
-      if (countryName.toUpperCase() == "SAUDI ARABIA") {
-        countryName = "KSA";
-      } else if (countryName.toUpperCase() == "UNITED ARAB EMIRATES") {
-        countryName = "UAE";
-      }
+      // Localize the country name
+      String localizedCountryName = localizations.getCountryName(countryName);
 
       final isTouched = countryName == selectedCountry;
       final fontSize = isTouched ? 20.0 : 16.0;
       final radius = isTouched ? 110.0 : 100.0;
 
       // Get the color for the current country, or use a default color if not found
-      final color = countryColors[countryName] ?? Colors.grey[300]!;
+      final color = countryColors[countryName.toUpperCase()] ??
+          (countryName.toUpperCase() == 'SAUDI ARABIA'
+              ? const Color(0xFF82E0AA)
+              : (countryName.toUpperCase() == 'UNITED ARAB EMIRATES'
+                  ? const Color(0xFFD7DBDD)
+                  : Colors.grey[300]!));
 
       return PieChartSectionData(
         color: color,
         value: entry.value,
-        title: countryName,
+        title: localizedCountryName, // Use the localized name here
         radius: radius,
         titleStyle: TextStyle(
           fontSize: fontSize,
           fontWeight: FontWeight.bold,
-          color: Colors.black,
+          color: const Color(0xffffffff),
         ),
       );
     }).toList();

@@ -369,9 +369,9 @@
     },
     {
       "name": "http",
-      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/http-1.2.0",
+      "rootUri": "file:///Users/developer/.pub-cache/hosted/pub.dev/http-0.13.6",
       "packageUri": "lib/",
-      "languageVersion": "3.2"
+      "languageVersion": "2.19"
     },
     {
       "name": "http_parser",
@@ -746,7 +746,7 @@
       "languageVersion": "3.2"
     }
   ],
-  "generated": "2024-04-08T16:28:03.321539Z",
+  "generated": "2024-04-08T16:48:05.048684Z",
   "generator": "pub",
   "generatorVersion": "3.2.6"
 }

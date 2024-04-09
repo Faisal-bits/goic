@@ -227,9 +227,9 @@ google_sign_in_web
 file:///Users/developer/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.3+2/
 file:///Users/developer/.pub-cache/hosted/pub.dev/google_sign_in_web-0.12.3+2/lib/
 http
-3.2
-file:///Users/developer/.pub-cache/hosted/pub.dev/http-1.2.0/
-file:///Users/developer/.pub-cache/hosted/pub.dev/http-1.2.0/lib/
+2.19
+file:///Users/developer/.pub-cache/hosted/pub.dev/http-0.13.6/
+file:///Users/developer/.pub-cache/hosted/pub.dev/http-0.13.6/lib/
 http_parser
 2.12
 file:///Users/developer/.pub-cache/hosted/pub.dev/http_parser-4.0.2/

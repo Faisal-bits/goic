@@ -7,29 +7,43 @@ import 'package:intl/intl.dart';
 import '../../models/history_notifier.dart';
 import 'package:logging/logging.dart';
 import 'package:goic/services/api_service.dart';
+import 'package:goic/localization.dart';
 
 final Logger logger = Logger('GIDPage');
 
 class CountryData {
+  final int id;
   final String name;
   double noOfFirms;
   double investment;
   double noOfLabor;
 
   CountryData({
+    required this.id,
     required this.name,
     required this.noOfFirms,
     required this.investment,
     required this.noOfLabor,
   });
 
+  // Update the factory constructor to assign the countryId to the id property
   factory CountryData.fromApi(
-      Map<String, dynamic> data, Map<int, String> countryIdToNameMap) {
+      Map<String, dynamic> data,
+      Map<int, Map<String, String>> countryIdToNameMap,
+      AppLocalizations localizations) {
     int countryId = data['countryid'];
-    String countryName = countryIdToNameMap[countryId] ?? 'Unknown';
+    Map<String, String>? names = countryIdToNameMap[countryId];
+    String countryName = 'Unknown'; // Default value
+
+    if (names != null) {
+      countryName = localizations.locale.languageCode == 'en'
+          ? names['en'] ?? 'Unknown'
+          : names['ar'] ?? 'Unknown';
+    }
 
     return CountryData(
-      name: countryName, // Now correctly using the country name
+      id: countryId,
+      name: countryName,
       noOfFirms: double.tryParse(data['cnttotfirms'].toString()) ?? 0.0,
       investment: double.tryParse(data['cnttotinvusd'].toString()) ?? 0.0,
       noOfLabor: double.tryParse(data['cnttotmpqty'].toString()) ?? 0.0,
@@ -37,21 +51,7 @@ class CountryData {
   }
 }
 
-List<CountryData> countryDataList = [
-  CountryData(
-      name: 'Saudi Arabia',
-      noOfFirms: 1200,
-      investment: 500,
-      noOfLabor: 300000),
-  CountryData(name: 'UAE', noOfFirms: 900, investment: 450, noOfLabor: 250000),
-  CountryData(
-      name: 'Qatar', noOfFirms: 700, investment: 300, noOfLabor: 150000),
-  CountryData(
-      name: 'Kuwait', noOfFirms: 500, investment: 200, noOfLabor: 120000),
-  CountryData(name: 'Oman', noOfFirms: 400, investment: 150, noOfLabor: 100000),
-  CountryData(
-      name: 'Bahrain', noOfFirms: 300, investment: 100, noOfLabor: 80000),
-];
+List<CountryData> countryDataList = [];
 
 class GIDPage extends StatefulWidget {
   final SearchConfig? initialConfig;
@@ -76,7 +76,7 @@ class _GIDPageState extends State<GIDPage> {
   double totalInvestment = 0;
   double totalLabor = 0;
   late int selectedCountryId;
-  Map<int, String> countryIdToNameMap = {};
+  Map<int, Map<String, String>> countryIdToNameMap = {};
 
   ApiService apiService = ApiService();
 
@@ -118,20 +118,33 @@ class _GIDPageState extends State<GIDPage> {
     // Build the country ID to name map
     await buildCountryIdToNameMap();
 
+    if (!mounted) return;
+    final localizations = AppLocalizations.of(context)!;
+
     // Fetch and display the default data
     await fetchGCCSummaryData(); // This should populate the GCC stats card
-    await fetchSummaryDataForCountries(); // Fetch detailed data for each country based on default filters
+    await fetchSummaryDataForCountries(
+        localizations); // Fetch detailed data for each country based on default filters
   }
 
   Future<void> buildCountryIdToNameMap() async {
     List<dynamic> countries = await apiService.fetchCountries();
+    Map<int, Map<String, String>> countryIdToNameMap = {};
+
     for (var country in countries) {
       int countryId = country['countryid'];
-      String countryName = country['nameenglish'];
-      setState(() {
-        countryIdToNameMap[countryId] = countryName;
-      });
+      String englishName = country['nameenglish'] ?? 'Unknown';
+      String arabicName = country['namearabic'] ?? 'Unknown';
+
+      countryIdToNameMap[countryId] = {
+        'en': englishName,
+        'ar': arabicName,
+      };
     }
+
+    setState(() {
+      this.countryIdToNameMap = countryIdToNameMap;
+    });
   }
 
   Future<void> fetchGCCSummaryData() async {
@@ -211,7 +224,7 @@ class _GIDPageState extends State<GIDPage> {
     return _countries.map<DropdownMenuItem<String>>((country) {
       return DropdownMenuItem<String>(
         value: country['countryid'].toString(),
-        child: Text(country['nameenglish']),
+        child: Text(country['namearabic']),
       );
     }).toList();
   }
@@ -229,11 +242,14 @@ class _GIDPageState extends State<GIDPage> {
     currentHistory.add(newSearchConfig);
     await saveSearchHistory(currentHistory);
 
+    if (!mounted) return;
+    final localizations = AppLocalizations.of(context)!;
+
     widget.onSearchDone?.call();
     await saveSearchHistory(currentHistory);
     historyNotifier.notifyListeners();
     await fetchGCCSummaryData();
-    await fetchSummaryDataForCountries();
+    await fetchSummaryDataForCountries(localizations);
   }
 
   void updateSummaryAndGraphs(List<CountryData> data) {
@@ -256,6 +272,8 @@ class _GIDPageState extends State<GIDPage> {
 
   void filterData() async {
     final ApiService apiService = ApiService();
+    if (!mounted) return;
+    final localizations = AppLocalizations.of(context)!;
     try {
       // Fetch filtered data for the selected filters
       List<dynamic> stats = await apiService.fetchGIDStats(
@@ -265,7 +283,8 @@ class _GIDPageState extends State<GIDPage> {
       );
 
       var processedData = stats
-          .map((stat) => CountryData.fromApi(stat, countryIdToNameMap))
+          .map((stat) =>
+              CountryData.fromApi(stat, countryIdToNameMap, localizations))
           .toList();
 
       setState(() {
@@ -283,40 +302,44 @@ class _GIDPageState extends State<GIDPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("GID Summary"),
+        title: Text(localizations.gid),
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.all(16.0),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
               child: Text(
-                "Search Filters",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                localizations.searchFilters,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            _buildFilters(),
+            _buildFilters(localizations),
             const SizedBox(height: 20),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
-                "GCC - Summary Stats",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                localizations.gccSummaryStats,
+                style:
+                    const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            _buildGCCSummaryCard(),
+            _buildGCCSummaryCard(localizations),
             const SizedBox(height: 20),
-            _buildHorizontalBarCharts(),
+            _buildHorizontalBarCharts(localizations),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFilters() {
+  Widget _buildFilters(AppLocalizations localizations) {
     return Card(
       // color: Colors.grey[100], // the card's background color to light gray
       margin: const EdgeInsets.all(16),
@@ -327,11 +350,11 @@ class _GIDPageState extends State<GIDPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Expanded(child: _buildYearDropdown()),
+                Expanded(child: _buildYearDropdown(localizations)),
                 const SizedBox(width: 8),
-                Expanded(child: _buildISICDropdown()),
+                Expanded(child: _buildISICDropdown(localizations)),
                 const SizedBox(width: 8),
-                Expanded(child: _buildStatusDropdown()),
+                Expanded(child: _buildStatusDropdown(localizations)),
               ],
             ),
             const SizedBox(height: 20),
@@ -346,7 +369,7 @@ class _GIDPageState extends State<GIDPage> {
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
               ),
-              child: const Text('Search'),
+              child: Text(localizations.search),
             ),
           ],
         ),
@@ -354,7 +377,7 @@ class _GIDPageState extends State<GIDPage> {
     );
   }
 
-  Widget _buildYearDropdown() {
+  Widget _buildYearDropdown(AppLocalizations localizations) {
     int currentYear = DateTime.now().year;
     // Check if the current month is after September
     bool isAfterSeptember = DateTime.now().month > 9;
@@ -366,7 +389,7 @@ class _GIDPageState extends State<GIDPage> {
     return DropdownButtonFormField<int>(
       isExpanded: true,
       value: selectedYear,
-      decoration: const InputDecoration(labelText: 'Year'),
+      decoration: InputDecoration(labelText: localizations.year),
       onChanged: (value) {
         setState(() {
           selectedYear = value!;
@@ -381,31 +404,44 @@ class _GIDPageState extends State<GIDPage> {
     );
   }
 
-  Widget _buildISICDropdown() {
+  Widget _buildISICDropdown(AppLocalizations localizations) {
     return DropdownButtonFormField<String>(
       isExpanded: true,
       value: selectedISICSector,
-      decoration: const InputDecoration(labelText: 'ISIC Sector'),
+      decoration: InputDecoration(labelText: localizations.isicSector),
       onChanged: (value) {
         setState(() {
           selectedISICSector = value!;
         });
       },
       items: _isicCodes.map((isicCode) {
+        final String isicName = localizations.locale.languageCode == 'en'
+            ? isicCode['nameenglish']
+            : isicCode['namearabic'];
         return DropdownMenuItem<String>(
           value: isicCode['isiccode'].toString(),
-          child: Text('${isicCode['isiccode']}: ${isicCode['nameenglish']}'),
+          child: Text('${isicCode['isiccode']}: $isicName'),
         );
       }).toList(),
     );
   }
 
-  Widget _buildStatusDropdown() {
-    List<String> statuses = ['All', 'Licensed', 'Operational'];
+  Widget _buildStatusDropdown(AppLocalizations localizations) {
+    List<String> statuses = [
+      localizations.all,
+      localizations.licensed,
+      localizations.operational,
+    ];
+
+    // Set the initial value of selectedStatus to the localized "all" value
+    if (!statuses.contains(selectedStatus)) {
+      selectedStatus = localizations.all;
+    }
+
     return DropdownButtonFormField<String>(
       isExpanded: true,
       value: selectedStatus,
-      decoration: const InputDecoration(labelText: 'Status'),
+      decoration: InputDecoration(labelText: localizations.status),
       onChanged: (value) {
         setState(() {
           selectedStatus = value!;
@@ -420,8 +456,8 @@ class _GIDPageState extends State<GIDPage> {
     );
   }
 
-  Widget _buildStatCard(
-      String title, double value, String percentage, bool isPositive) {
+  Widget _buildStatCard(String title, double value, String percentage,
+      bool isPositive, AppLocalizations localizations) {
     // Use _formatNumber within this method to handle the value formatting
     String formattedValue = _formatNumber(value);
 
@@ -473,7 +509,7 @@ class _GIDPageState extends State<GIDPage> {
     return "${percentage.toStringAsFixed(1)}%";
   }
 
-  Widget _buildGCCSummaryCard() {
+  Widget _buildGCCSummaryCard(AppLocalizations localizations) {
     // The method uses totalFirms, totalInvestment, and totalLabor directly
     // These variables are updated by fetchSummaryData based on API response
     return Card(
@@ -484,30 +520,42 @@ class _GIDPageState extends State<GIDPage> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             Expanded(
-                child: _buildStatCard("No. of Firms", totalFirms,
-                    formatPercentage(totalFirms, totalFirms), true)),
+                child: _buildStatCard(
+                    localizations.noOfFirms,
+                    totalFirms,
+                    formatPercentage(totalFirms, totalFirms),
+                    true,
+                    localizations)),
             Expanded(
-                child: _buildStatCard("Investment (USD)", totalInvestment,
-                    formatPercentage(totalInvestment, totalInvestment), true)),
+                child: _buildStatCard(
+                    localizations.investmentUSD,
+                    totalInvestment,
+                    formatPercentage(totalInvestment, totalInvestment),
+                    true,
+                    localizations)),
             Expanded(
-                child: _buildStatCard("No. of Labor", totalLabor,
-                    formatPercentage(totalLabor, totalLabor), true)),
+                child: _buildStatCard(
+                    localizations.noOfLabor,
+                    totalLabor,
+                    formatPercentage(totalLabor, totalLabor),
+                    true,
+                    localizations)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHorizontalBarCharts() {
+  Widget _buildHorizontalBarCharts(AppLocalizations localizations) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
+        Padding(
           // Wrapping the Text widget with Padding for better spacing
-          padding: EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Text(
-            "GCC - Bar Graphs",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            localizations.gccBarGraphs,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             textAlign: TextAlign.left,
           ),
         ),
@@ -517,19 +565,22 @@ class _GIDPageState extends State<GIDPage> {
           child: PageView(
             children: [
               _buildBarChart(
-                title: "No. of Firms",
+                title: localizations.noOfFirms,
                 dataSelector: (CountryData data) => data.noOfFirms,
                 barColor: Colors.lightBlue,
+                localizations: localizations,
               ),
               _buildBarChart(
-                title: "Investment (USD Mill)",
+                title: localizations.investmentUSDMill,
                 dataSelector: (CountryData data) => data.investment,
                 barColor: Colors.greenAccent,
+                localizations: localizations,
               ),
               _buildBarChart(
-                title: "No. of Labor",
+                title: localizations.noOfLabor,
                 dataSelector: (CountryData data) => data.noOfLabor,
                 barColor: Colors.orangeAccent,
+                localizations: localizations,
               ),
             ],
           ),
@@ -538,12 +589,16 @@ class _GIDPageState extends State<GIDPage> {
     );
   }
 
-  Future<void> fetchSummaryDataForCountries() async {
+  Future<void> fetchSummaryDataForCountries(
+      AppLocalizations localizations) async {
     Map<int, String> countryNames =
         {}; // Map to hold country IDs and their names
     // Populate countryNames with the country ID and name
     _countries.forEach((country) {
-      countryNames[country['countryid']] = country['nameenglish'];
+      countryNames[country['countryid']] =
+          localizations.locale.languageCode == 'en'
+              ? country['nameenglish']
+              : country['namearabic'];
     });
 
     List<int> countryIds = [
@@ -581,7 +636,7 @@ class _GIDPageState extends State<GIDPage> {
           if (filteredStatusIds.isEmpty ||
               filteredStatusIds.contains(statusId)) {
             fetchedDataMap[countryName] =
-                CountryData.fromApi(data, countryIdToNameMap);
+                CountryData.fromApi(data, countryIdToNameMap, localizations);
           } else {
             // Merge data for company statuses 4 and 5
             fetchedDataMap[countryName]!.noOfFirms +=
@@ -629,12 +684,13 @@ class _GIDPageState extends State<GIDPage> {
     required String title,
     required double Function(CountryData) dataSelector,
     required Color barColor,
+    required AppLocalizations localizations,
   }) {
     // Check if countryDataList is empty and return an empty widget or placeholder.
     if (countryDataList.isEmpty) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: const Center(child: Text('No data available')),
+        child: Center(child: Text(localizations.noDataAvailable)),
       );
     }
 
@@ -690,12 +746,20 @@ class _GIDPageState extends State<GIDPage> {
                         final index = value.toInt();
                         if (index >= 0 && index < countryDataList.length) {
                           String countryName = countryDataList[index].name;
+
                           // Check for specific country names and replace them with abbreviations
                           if (countryName == "SAUDI ARABIA") {
                             countryName = "KSA";
                           } else if (countryName == "UNITED ARAB EMIRATES") {
                             countryName = "UAE";
+                          } else if (countryName ==
+                              "المملكة العربية السعودية") {
+                            countryName = "السعودية";
+                          } else if (countryName ==
+                              "الامارات العربية المتحدة") {
+                            countryName = "الإمارات";
                           }
+
                           return Text(
                             countryName,
                             style: const TextStyle(
@@ -705,7 +769,6 @@ class _GIDPageState extends State<GIDPage> {
                         }
                         return const Text('');
                       },
-
                       reservedSize:
                           40, // Adjust based on the size of the labels
                     ),

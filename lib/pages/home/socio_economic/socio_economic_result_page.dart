@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:goic/services/api_service.dart';
 import 'dart:math';
+import 'package:goic/localization.dart';
 
 class SocioEconomicResultPage extends StatefulWidget {
   final int countryId;
   final int? comparisonCountryId;
   final int economicIndicatorId;
   final bool comparisonMode;
+  final String economicIndicatorName;
 
   const SocioEconomicResultPage({
     Key? key,
@@ -15,6 +17,7 @@ class SocioEconomicResultPage extends StatefulWidget {
     this.comparisonCountryId,
     required this.economicIndicatorId,
     required this.comparisonMode,
+    required this.economicIndicatorName,
   }) : super(key: key);
 
   @override
@@ -41,9 +44,14 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
     ApiService apiService = ApiService();
     List<dynamic> countries = await apiService.fetchCountries();
     Map<String, String> countryIdToNameMap = {};
+    if (!mounted) return;
+    final localizations = AppLocalizations.of(context)!;
+
     for (var country in countries) {
       countryIdToNameMap[country['countryid'].toString()] =
-          country['nameenglish'];
+          localizations.locale.languageCode == 'ar'
+              ? country['namearabic']
+              : country['nameenglish'];
     }
 
     int currentYear = DateTime.now().year - 1;
@@ -162,26 +170,29 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
 
   @override
   Widget build(BuildContext context) {
+    final localizations = AppLocalizations.of(context)!;
     String countryName = _countryIdToNameMap[widget.countryId.toString()] ?? '';
     String comparisonCountryName =
         _countryIdToNameMap[widget.comparisonCountryId?.toString() ?? ''] ?? '';
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('$countryName - Socio-Economic Analysis'),
+        title: Text('$countryName - ${localizations.socioEconomic}'),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             if (widget.comparisonMode) ...[
-              _buildInfoCard(countryName, _countryArea, _population),
+              _buildInfoCard(
+                  countryName, _countryArea, _population, localizations),
               _buildInfoCard(comparisonCountryName, _comparisonCountryArea,
-                  _comparisonPopulation),
+                  _comparisonPopulation, localizations),
             ] else
-              _buildInfoCard(countryName, _countryArea, _population),
+              _buildInfoCard(
+                  countryName, _countryArea, _population, localizations),
             const SizedBox(height: 16),
             _buildBarChart(
-              title: 'Economic Indicator',
+              title: widget.economicIndicatorName,
               data: _economicData,
               comparisonData: _comparisonEconomicData,
               comparisonMode: widget.comparisonMode,
@@ -194,8 +205,8 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
     );
   }
 
-  Widget _buildInfoCard(
-      String countryName, String countryArea, String population) {
+  Widget _buildInfoCard(String countryName, String countryArea,
+      String population, AppLocalizations localizations) {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.all(16),
@@ -210,12 +221,12 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Country Area: $countryArea km²',
+              '${localizations.countryArea}: $countryArea km²',
               style: const TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 8),
             Text(
-              'Population: ${formatPopulation(population)}',
+              '${localizations.population}: ${formatPopulation(population)}',
               style: const TextStyle(fontSize: 16),
             ),
           ],
