@@ -143,4 +143,51 @@ class PostService {
       logger.warning("Failed to update reply like: $error");
     });
   }
+
+  Stream<List<Post>> getPostsByMode(String mode) {
+    return _db
+        .collection('posts')
+        .where('mode', isEqualTo: mode)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .asyncMap((snapshot) async {
+      List<Future<Post>> futures = snapshot.docs.map((doc) async {
+        var postData = Post.fromFirestore(doc);
+        try {
+          var userData =
+              await _db.collection('users').doc(postData.userId).get();
+          postData.updateUserInfo(
+            firstName: userData.data()?['firstName'] ?? '',
+            profilePicUrl: userData.data()?['profilePicUrl'],
+          );
+        } catch (e) {
+          logger.warning("Error fetching user data: $e");
+        }
+        return postData;
+      }).toList();
+
+      // Wait for all futures to complete
+      return await Future.wait(futures);
+    });
+  }
+
+  Future<void> deletePost(String postId) async {
+    try {
+      // Delete the post document
+      await _db.collection('posts').doc(postId).delete();
+
+      // Delete all the replies associated with the post
+      var repliesSnapshot =
+          await _db.collection('posts').doc(postId).collection('replies').get();
+
+      for (var replyDoc in repliesSnapshot.docs) {
+        await replyDoc.reference.delete();
+      }
+
+      logger.info("Post and its replies deleted successfully.");
+    } catch (error) {
+      logger.warning("Failed to delete post: $error");
+      throw error;
+    }
+  }
 }

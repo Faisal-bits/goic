@@ -16,6 +16,8 @@ class NewPostScreen extends StatefulWidget {
 class _NewPostScreenState extends State<NewPostScreen> {
   final TextEditingController _controller = TextEditingController();
   bool _isSubmitting = false;
+  String _selectedMode =
+      'general'; // Add this line to declare and initialize _selectedMode
 
   Future<void> _submitPost() async {
     if (_isSubmitting) return; // Prevent multiple submissions
@@ -46,6 +48,7 @@ class _NewPostScreenState extends State<NewPostScreen> {
       'timestamp': FieldValue.serverTimestamp(),
       'likesCount': 0,
       'repliesCount': 0,
+      'mode': _selectedMode,
     };
 
     // Attempt to save post to Firestore
@@ -75,6 +78,23 @@ class _NewPostScreenState extends State<NewPostScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            DropdownButtonFormField<String>(
+              value: _selectedMode,
+              onChanged: (value) {
+                setState(() {
+                  _selectedMode = value!;
+                });
+              },
+              items: ['general', 'qa'].map((mode) {
+                return DropdownMenuItem<String>(
+                  value: mode,
+                  child: Text(mode == 'general' ? 'General Post' : 'Q&A Post'),
+                );
+              }).toList(),
+              decoration: const InputDecoration(
+                labelText: 'Post Mode',
+              ),
+            ),
             TextField(
               controller: _controller,
               decoration: InputDecoration(
@@ -87,7 +107,8 @@ class _NewPostScreenState extends State<NewPostScreen> {
             ElevatedButton(
               onPressed: _isSubmitting ? null : _submitPost,
               child: Text(
-                  AppLocalizations.of(context)?.submitPost ?? 'Submit Post'),
+                AppLocalizations.of(context)?.submitPost ?? 'Submit Post',
+              ),
             ),
           ],
         ),

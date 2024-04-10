@@ -6,11 +6,12 @@ class Post {
   final String userId;
   final String content;
   final DateTime timestamp;
-  int likesCount; // Mutable to allow updates in the UI
+  int likesCount;
   int repliesCount;
-  List<String> likedByUsers; // Mutable to allow updates in the UI
-  String? firstName; // Optional user's first name
-  String? profilePicUrl; // Optional URL to the user's profile picture
+  List<String> likedByUsers;
+  String? firstName;
+  String? profilePicUrl;
+  final String mode; // Add this field to indicate the post mode
 
   Post({
     required this.postId,
@@ -22,11 +23,11 @@ class Post {
     required this.likedByUsers,
     this.firstName,
     this.profilePicUrl,
+    required this.mode, // Add this parameter to the constructor
   });
 
   factory Post.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
-    // Safe casting with fallbacks for null or missing values
     DateTime timestamp = data['timestamp'] != null
         ? (data['timestamp'] as Timestamp).toDate()
         : DateTime.now();
@@ -47,6 +48,7 @@ class Post {
       likesCount: likesCount,
       repliesCount: repliesCount,
       likedByUsers: likedByUsers,
+      mode: data['mode'] ?? 'general', // Add this line to set the mode field
     );
   }
 

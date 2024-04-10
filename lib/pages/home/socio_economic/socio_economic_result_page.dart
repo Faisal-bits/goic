@@ -3,6 +3,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:goic/services/api_service.dart';
 import 'dart:math';
 import 'package:goic/localization.dart';
+import 'package:logging/logging.dart';
+import 'dart:async';
+
+final Logger logger = Logger('SOEResult');
 
 class SocioEconomicResultPage extends StatefulWidget {
   final int countryId;
@@ -135,12 +139,12 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
         }
       }
 
-      print('Country Area: $countryArea');
-      print('Population: $population');
-      print('Comparison Country Area: $comparisonCountryArea');
-      print('Comparison Population: $comparisonPopulation');
+      // print('Country Area: $countryArea');
+      // print('Population: $population');
+      // print('Comparison Country Area: $comparisonCountryArea');
+      // print('Comparison Population: $comparisonPopulation');
     } catch (e) {
-      print('Error fetching country area or population: $e');
+      logger.warning('Error fetching country area or population: $e');
     }
 
     setState(() {
@@ -216,7 +220,7 @@ class _SocioEconomicResultPageState extends State<SocioEconomicResultPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '$countryName',
+              countryName,
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),

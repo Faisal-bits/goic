@@ -94,6 +94,10 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget _buildTrailingIcons(Post post) {
     final userId = FirebaseAuth.instance.currentUser?.uid;
+    final isAdmin =
+        FirebaseAuth.instance.currentUser?.email == 'admin@example.com';
+    final isOwner = post.userId == userId;
+
     if (userId == null) {
       // Handle case when the user is not logged in
       return const SizedBox.shrink(); // Return an empty widget
@@ -114,6 +118,23 @@ class _CommunityPageState extends State<CommunityPage> {
           icon: const Icon(Icons.reply),
           onPressed: () => _showReplies(context, post),
         ),
+        if (isAdmin || isOwner)
+          IconButton(
+            icon: const Icon(Icons.delete),
+            onPressed: () async {
+              try {
+                await _postService.deletePost(post.postId);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Post deleted successfully')),
+                );
+              } catch (error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Failed to delete post')),
+                );
+              }
+            },
+          ),
       ],
     );
   }

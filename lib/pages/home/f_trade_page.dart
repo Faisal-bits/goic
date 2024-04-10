@@ -348,16 +348,6 @@ class _FTradePageState extends State<FTradePage> {
     List<BarChartGroupData> barGroups = [];
     int i = 0;
     currentData.forEach((country, value) {
-      String displayCountryName =
-          country; // Default to using the country name directly
-      if (country == "SAUDI ARABIA") {
-        displayCountryName = "KSA";
-      } else if (country == "UNITED ARAB EMIRATES") {
-        displayCountryName = "UAE";
-      } else {
-        displayCountryName = localizations.getCountryName(country);
-      }
-
       barGroups.add(
         BarChartGroupData(
           x: i++,
@@ -417,7 +407,7 @@ class _FTradePageState extends State<FTradePage> {
                 sideTitles: SideTitles(
                   showTitles: true,
                   getTitlesWidget: (value, meta) {
-                    return Text(value == 0 ? '0' : '${formatNumber(value)}',
+                    return Text(value == 0 ? '0' : formatNumber(value),
                         style: const TextStyle(fontSize: 10));
                   },
                   reservedSize: 40,

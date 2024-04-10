@@ -295,8 +295,8 @@ class _LandingPageState extends State<LandingPage> {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => const NavBar())); // Navigate to main screen
+      Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const NavBar()));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
