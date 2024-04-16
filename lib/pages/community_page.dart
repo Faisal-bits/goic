@@ -93,10 +93,10 @@ class _CommunityPageState extends State<CommunityPage> {
   }
 
   Widget _buildTrailingIcons(Post post) {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    final isAdmin =
+    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+    final bool isAdmin =
         FirebaseAuth.instance.currentUser?.email == 'admin@example.com';
-    final isOwner = post.userId == userId;
+    final bool isOwner = post.userId == userId;
 
     if (userId == null) {
       // Handle case when the user is not logged in
@@ -105,37 +105,41 @@ class _CommunityPageState extends State<CommunityPage> {
 
     bool alreadyLiked = post.likedByUsers.contains(userId);
 
+    List<Widget> icons = [
+      IconButton(
+        icon: Icon(alreadyLiked ? Icons.thumb_up : Icons.thumb_up_alt_outlined),
+        onPressed: () => _likePost(post.postId, alreadyLiked, userId),
+      ),
+      Text('${post.likesCount}'),
+      IconButton(
+          icon: const Icon(Icons.comment),
+          onPressed: () => _showReplies(context, post),
+          tooltip: 'View Replies'),
+    ];
+
+    // Allow deletion for admins or post owners
+    if (isAdmin || isOwner) {
+      icons.add(IconButton(
+        icon: const Icon(Icons.delete),
+        onPressed: () async {
+          try {
+            await _postService.deletePost(post.postId);
+            if (!mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Post deleted successfully')),
+            );
+          } catch (error) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Failed to delete post')),
+            );
+          }
+        },
+      ));
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon:
-              Icon(alreadyLiked ? Icons.thumb_up : Icons.thumb_up_alt_outlined),
-          onPressed: () => _likePost(post.postId, alreadyLiked, userId),
-        ),
-        Text('${post.likesCount}'),
-        IconButton(
-          icon: const Icon(Icons.reply),
-          onPressed: () => _showReplies(context, post),
-        ),
-        if (isAdmin || isOwner)
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              try {
-                await _postService.deletePost(post.postId);
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Post deleted successfully')),
-                );
-              } catch (error) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Failed to delete post')),
-                );
-              }
-            },
-          ),
-      ],
+      children: icons,
     );
   }
 
@@ -186,14 +190,9 @@ class _CommunityPageState extends State<CommunityPage> {
 
   void _showReplies(BuildContext context, Post post) {
     final TextEditingController replyController = TextEditingController();
-
     final String? userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) {
-      // Handle the case where the user is not logged in
-      logger.info("User not logged in");
-      // Optionally, show a message to the user or return to prevent opening the replies view
-      return;
-    }
+    final bool isAdmin =
+        FirebaseAuth.instance.currentUser?.email == 'admin@example.com';
 
     showModalBottomSheet(
       context: context,
@@ -213,7 +212,6 @@ class _CommunityPageState extends State<CommunityPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                // Use a StreamBuilder to listen for real-time updates to replies
                 Expanded(
                   child: StreamBuilder<List<Reply>>(
                     stream: _postService.getRepliesForPost(post.postId),
@@ -240,83 +238,64 @@ class _CommunityPageState extends State<CommunityPage> {
                             title: Text(reply.content),
                             subtitle: Text(
                                 "${reply.firstName}: ${reply.likesCount} Likes"),
-                            trailing: IconButton(
-                              icon: Icon(
-                                reply.likedByUsers.contains(userId)
-                                    ? Icons.thumb_up
-                                    : Icons.thumb_up_alt_outlined,
-                                color: reply.likedByUsers.contains(userId)
-                                    ? Colors.blue
-                                    : null,
-                              ),
-                              onPressed: () async {
-                                // Determine the correct 'isLiked' state to pass
-                                bool isLiked =
-                                    !reply.likedByUsers.contains(userId);
-                                await _postService.likeReply(
-                                    post.postId, reply.replyId, isLiked);
-
-                                // setState call might be needed if your UI does not automatically update
-                              },
-                            ),
                           );
                         },
                       );
                     },
                   ),
                 ),
-
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: <Widget>[
-                      Expanded(
-                        child: TextField(
-                          controller: replyController,
-                          decoration: const InputDecoration(
-                              hintText: "Write a reply..."),
+                // Show input area only to admins
+                if (isAdmin)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(
+                          child: TextField(
+                            controller: replyController,
+                            decoration: const InputDecoration(
+                                hintText: "Write a reply..."),
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: () async {
-                          if (replyController.text.trim().isEmpty) {
-                            logger.info("Reply field is empty");
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Reply cannot be empty")));
-                            return;
-                          }
+                        IconButton(
+                          icon: const Icon(Icons.send),
+                          onPressed: () async {
+                            if (replyController.text.trim().isEmpty) {
+                              logger.info("Reply field is empty");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text("Reply cannot be empty")));
+                              return;
+                            }
 
-                          logger.info(
-                              "Submitting reply: ${replyController.text}");
+                            logger.info(
+                                "Submitting reply: ${replyController.text}");
 
-                          try {
-                            await _postService.addReplyToPost(
-                                post.postId,
-                                userId, // Use 'userId' here, ensuring it's defined and not null
-                                replyController.text.trim());
-                            logger.info("Reply submitted successfully");
+                            try {
+                              await _postService.addReplyToPost(
+                                  post.postId,
+                                  userId!, // Ensure 'userId' is not null here
+                                  replyController.text.trim());
+                              logger.info("Reply submitted successfully");
 
-                            replyController
-                                .clear(); // Clear the text field after submitting
-                            if (!mounted) return;
-                            Navigator.pop(
-                                context); // Optionally close the modal
+                              replyController
+                                  .clear(); // Clear the text field after submitting
+                              if (!mounted) return;
+                              Navigator.pop(
+                                  context); // Optionally close the modal
 
-                            // Trigger a state change to refresh the UI, like updating the reply count
-                            setState(() {});
-                          } catch (e) {
-                            logger.warning("Failed to submit reply: $e");
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                    content: Text("Failed to submit reply")));
-                          }
-                        },
-                      ),
-                    ],
+                              setState(() {}); // Refresh the UI, if necessary
+                            } catch (e) {
+                              logger.warning("Failed to submit reply: $e");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text("Failed to submit reply")));
+                            }
+                          },
+                        ),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),
