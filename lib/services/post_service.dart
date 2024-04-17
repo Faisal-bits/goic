@@ -190,4 +190,45 @@ class PostService {
       throw error;
     }
   }
+
+  Future<void> deleteReply(String postId, String replyId) async {
+    var postRef = _db.collection('posts').doc(postId);
+    var replyRef = postRef.collection('replies').doc(replyId);
+
+    return _db.runTransaction((transaction) async {
+      // Fetch the reply to ensure it exists
+      DocumentSnapshot replySnapshot = await transaction.get(replyRef);
+      if (!replySnapshot.exists) {
+        throw Exception("Reply does not exist!");
+      }
+
+      // Fetch the post to update the replies count
+      DocumentSnapshot postSnapshot = await transaction.get(postRef);
+      if (!postSnapshot.exists) {
+        throw Exception("Post does not exist!");
+      }
+
+      var postData = postSnapshot.data() as Map<String, dynamic>?;
+      if (postData == null) {
+        throw Exception("Post data is unexpectedly null");
+      }
+
+      int currentRepliesCount = postData['repliesCount'] ?? 0;
+      if (currentRepliesCount > 0) {
+        // Decrement the replies count
+        transaction.update(postRef, {'repliesCount': currentRepliesCount - 1});
+      } else {
+        logger.warning("Attempted to decrement replies count below zero.");
+      }
+
+      // Delete the reply document
+      transaction.delete(replyRef);
+    }).then((result) {
+      logger.info(
+          "Reply deleted and post's reply count decremented successfully.");
+    }).catchError((error) {
+      logger.warning("Failed to delete reply: $error");
+      throw error;
+    });
+  }
 }

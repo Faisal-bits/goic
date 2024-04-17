@@ -228,6 +228,7 @@ class _CommunityPageState extends State<CommunityPage> {
                         itemCount: replies.length,
                         itemBuilder: (context, index) {
                           var reply = replies[index];
+                          bool isOwner = reply.userId == userId;
                           return ListTile(
                             leading: reply.profilePicUrl != null
                                 ? CircleAvatar(
@@ -238,13 +239,37 @@ class _CommunityPageState extends State<CommunityPage> {
                             title: Text(reply.content),
                             subtitle: Text(
                                 "${reply.firstName}: ${reply.likesCount} Likes"),
+                            trailing: (isAdmin || isOwner)
+                                ? IconButton(
+                                    icon: Icon(Icons.delete),
+                                    onPressed: () async {
+                                      try {
+                                        await _postService.deleteReply(
+                                            post.postId, reply.replyId);
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Reply deleted successfully')),
+                                        );
+                                      } catch (error) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Failed to delete reply')),
+                                        );
+                                      }
+                                    },
+                                  )
+                                : null,
                           );
                         },
                       );
                     },
                   ),
                 ),
-                // Show input area only to admins
                 if (isAdmin)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
